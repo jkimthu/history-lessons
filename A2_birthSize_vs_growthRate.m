@@ -1,7 +1,7 @@
-%% Figure A: mean interdivision time vs mean growth rate
+%% Figure A2: mean birth size vs mean growth rate
 
 
-%  Goal: determine interdivision time as predicted
+%  Goal: determine birth size as predicted
 %        by population-averaged growth rate d(logV)/dt, plotting:
 
 
@@ -23,8 +23,8 @@
 
 
 
-%  Last edit: jen, 2019 January 16
-%  Commit: first commit, adapted from figure 9 from sixpack-abs
+%  Last edit: jen, 2019 February 2
+%  Commit: first commit, adapted from figure A from history-lessons
 
 
 %  OK let's go!
@@ -54,9 +54,9 @@ exptArray = [2,3,4,5,6,7,9,10,11,12,13,14,15]; % use corresponding dataIndex val
 
 
 % 1b. initialize data vectors to store stats for each experiment
-divT_mean = cell(length(exptArray),1);
-divT_std = cell(length(exptArray),1);
-divT_count = cell(length(exptArray),1);
+Vbirth_mean = cell(length(exptArray),1);
+Vbirth_std = cell(length(exptArray),1);
+Vbirth_count = cell(length(exptArray),1);
 
 gr_mean = cell(length(exptArray),1);
 gr_std = cell(length(exptArray),1);
@@ -71,26 +71,20 @@ for e = 1:length(exptArray)
     date = storedMetaData{index}.date;
     expType = storedMetaData{index}.experimentType;
     bubbletime = storedMetaData{index}.bubbletime;
+    
     timescale = storedMetaData{index}.timescale;
     disp(strcat(date, ': analyze!'))
     
-    datesForLegend{e} = date;
     
-    
-    % 3. load measured experiment data 
+    % 3. load measured experiment data    
     experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
     cd(experimentFolder)
-    filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
+    if strcmp(date,'2017-11-12') == 1
+        filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
+    elseif strcmp(expType,'origFluc') == 1
+        filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
+    end
     load(filename,'D5','T');
-    
-%     experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-%     cd(experimentFolder)
-%     if strcmp(date,'2017-11-12') == 1
-%         filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
-%     elseif strcmp(expType,'origFluc') == 1
-%         filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
-%     end
-%     load(filename,'D5','T');
     
     
     
@@ -143,24 +137,25 @@ for e = 1:length(exptArray)
         timestamps_hr2 = conditionData_fullOnly(:,2)./3600;   % same as above, but for growth rate trimming
         
         isDrop = conditionData_fullOnly(:,4);                 % col 4  = isDrop, 1 marks a birth event
-        timeSinceBirth_min = conditionData_fullOnly(:,6)./60; % col 6  = timeSinceBirth in seconds converted to min
+        volumes = conditionData_fullOnly(:,11);             % col 11 = calculated va_vals (cubic um)
         
         
         
         % 10. extract only final timeSinceBirth from each growth curve,
         %     this is the inter-division time!
-        birthIndeces = find(isDrop==1);
-        finalDivTimes = timeSinceBirth_min(birthIndeces(2:end)-1); % final timeSince birth is indexed right before every drop event
+        final_birthSize = volumes(isDrop==1);
+        %birthIndeces = find(isDrop==1);
+        %finalDivTimes = volumes(birthIndeces(2:end)-1); % final timeSince birth is indexed right before every drop event
                % ^ minutes between recorded birth and division
                
-        finalTimestamps = timestamps_hr(birthIndeces(2:end)-1); % experiment timestamp (hours) of each division event.
+        finalTimestamps = timestamps_hr(isDrop==1); % experiment timestamp (hours) of each division event.
         
         
         
         % 11. remove zeros, which occur if no full track data exists at a drop
-        divTimes = finalDivTimes(finalDivTimes>0);
-        divTimestamps = finalTimestamps(finalDivTimes>0);
-        clear finalDivTimes finalTimestamps birthIndeces timeSinceBirth_min
+        Vbirth = final_birthSize(final_birthSize>0);
+        birthTimestamps = finalTimestamps(final_birthSize>0);
+        clear final_birthSize finalTimestamps timeSinceBirth_min
         
         
         
@@ -168,15 +163,15 @@ for e = 1:length(exptArray)
         maxTime = bubbletime(condition);
         
         if maxTime > 0
-            divTimes_bubbleTrimmed = divTimes(divTimestamps <= maxTime,:);
-            divTimestamps_bubbleTrimmed = divTimestamps(divTimestamps <= maxTime,:);
+            Vbirth_bubbleTrimmed = Vbirth(birthTimestamps <= maxTime,:);
+            birthTimestamps_bubbleTrimmed = birthTimestamps(birthTimestamps <= maxTime,:);
             
             growthRates_bubbleTrimmed = growthRates_fullOnly(timestamps_hr2 <= maxTime,:);
             grTimestamps_bubbleTrimmed = timestamps_hr2(timestamps_hr2 <= maxTime,:);
             
         else
-            divTimes_bubbleTrimmed = divTimes;
-            divTimestamps_bubbleTrimmed = divTimestamps;
+            Vbirth_bubbleTrimmed = Vbirth;
+            birthTimestamps_bubbleTrimmed = birthTimestamps;
             
             growthRates_bubbleTrimmed = growthRates_fullOnly;
             grTimestamps_bubbleTrimmed = timestamps_hr2;
@@ -187,29 +182,29 @@ for e = 1:length(exptArray)
         
         % 13. truncate data to stabilized regions
         minTime = 3;
-        divTimes_fullyTrimmed = divTimes_bubbleTrimmed(divTimestamps_bubbleTrimmed >= minTime,:);
+        birthTimes_fullyTrimmed = Vbirth_bubbleTrimmed(birthTimestamps_bubbleTrimmed >= minTime,:);
         growthRates_fullyTrimmed = growthRates_bubbleTrimmed(grTimestamps_bubbleTrimmed >= minTime,:);
         clear growthRates_bubbleTrimmed divTimes_bubbleTrimmed divTimestamps_bubbleTrimmed grTimestamps_bubbleTrimmed
         
         
         
         % if no div data in steady-state, skip condition
-        if isempty(divTimes_fullyTrimmed) == 1
+        if isempty(birthTimes_fullyTrimmed) == 1
             continue
         else
             
             % 14. trim outliers (those 3 std dev away from median) from final dataset
-            divT_median = median(divTimes_fullyTrimmed);
-            divT_std_temp = std(divTimes_fullyTrimmed);
-            divT_temp = divTimes_fullyTrimmed(divTimes_fullyTrimmed <= (divT_median+divT_std_temp*3)); % cut smallest vals, over 3 std out
-            divT_final = divT_temp(divT_temp >= (divT_median-divT_std_temp*3));          % cut largest vals, over 3 std out
-            clear divT_median divT_std_temp divT_temp
+            birthSize_median = median(birthTimes_fullyTrimmed);
+            birthSize_std_temp = std(birthTimes_fullyTrimmed);
+            birthSize_temp = birthTimes_fullyTrimmed(birthTimes_fullyTrimmed <= (birthSize_median+birthSize_std_temp*3)); % cut smallest vals, over 3 std out
+            birthSize_final = birthSize_temp(birthSize_temp >= (birthSize_median-birthSize_std_temp*3));          % cut largest vals, over 3 std out
+            clear birthSize_median birthSize_std_temp birthSize_temp
             
             
             % 15. calculate final populuation mean and count
-            divT_mean{e} = mean(divT_final);
-            divT_std{e} = std(divT_final);
-            divT_count{e} = length(divT_final);
+            Vbirth_mean{e} = mean(birthSize_final);
+            Vbirth_std{e} = std(birthSize_final);
+            Vbirth_count{e} = length(birthSize_final);
             
             gr_mean{e} = nanmean(growthRates_fullyTrimmed);
             gr_std{e} = nanstd(growthRates_fullyTrimmed);
@@ -233,14 +228,14 @@ for e = 1:length(exptArray)
         
         
         figure(1)
-        errorbar(gr_mean{e},divT_mean{e},divT_std{e},'Color',color)
+        errorbar(gr_mean{e},Vbirth_mean{e},Vbirth_std{e},'Color',color)
         hold on
-        plot(gr_mean{e},divT_mean{e},'Marker',xmark,'Color',color)
+        plot(gr_mean{e},Vbirth_mean{e},'Marker',xmark,'Color',color)
         hold on
-        ylabel('inter-division time (min)')
+        ylabel('birth volume (cubic um)')
         xlabel('growth rate (1/hr)')
         title('population mean from all experiments')
-        axis([0 19 0 80])
+        axis([0 4 0 8])
 
         
     end
@@ -252,14 +247,14 @@ end
 %% rando lines for plotting PDFs
 
 % 16. bin data and normalize bin counts by total counts
-assignedBins_raw = ceil(divT_final/binSize);
+assignedBins_raw = ceil(birthSize_final/binSize);
 
 
 
 % 15. calculate pdf
-binned_divT_raw = accumarray(assignedBins_raw, divT_final, [], @(x) {x});
+binned_divT_raw = accumarray(assignedBins_raw, birthSize_final, [], @(x) {x});
 binCounts_raw = cellfun(@length,binned_divT_raw);
-pdf_divT_raw = binCounts_raw/divT_count;
+pdf_divT_raw = binCounts_raw/Vbirth_count;
 
 
 
