@@ -28,7 +28,7 @@ clc
 clear
 
 % 0. initialize complete meta data
-cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+%cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 dataIndex = find(~cellfun(@isempty,storedMetaData));
 experimentCount = length(dataIndex);
@@ -70,8 +70,8 @@ for e = 1:length(exptArray)
     
     
     % 3. load measured experiment data    
-    experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-    cd(experimentFolder)
+    %experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
+    %cd(experimentFolder)
     filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
     load(filename,'D5','T');
     
