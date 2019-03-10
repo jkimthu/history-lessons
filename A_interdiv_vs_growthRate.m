@@ -16,15 +16,21 @@
 %                       7. calculate growth rate
 %                       8. trim condition and growth rate data to include only full cell cycles
 %                       9. isolate isDrop, timestamp, and timeSinceBirth data
-
+%                      10. extract only final timeSinceBirth from each growth curve, this is the interdivision time!
+%                      11. remove zeros, which occur if no full track data exists at a drop
+%                      12. truncate data to non-erroneous (e.g. bubbles) timestamps
+%                      13. truncate data to stabilized regions
+%                      14. trim outliers (those 3 std dev away from median) from final dataset
+%                      15. calculate final populuation mean and count
+%              16. plot mean interdivT vs mean growth rate
 
 %       2. inter-division time and mean log2 growth rate of each cycle
 %       3. plot population-averaged interdiv time vs mean log2 growth rate
 
 
 
-%  Last edit: jen, 2019 January 16
-%  Commit: first commit, adapted from figure 9 from sixpack-abs
+%  Last edit: jen, 2019 February 27
+%  Commit: add expected relationship t_div = 1/mu
 
 
 %  OK let's go!
@@ -35,7 +41,7 @@ clear
 clc
 
 % 0. initialize complete meta data
-cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+%cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 dataIndex = find(~cellfun(@isempty,storedMetaData));
 
@@ -79,19 +85,9 @@ for e = 1:length(exptArray)
     
     % 3. load measured experiment data 
     experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-    cd(experimentFolder)
+    %cd(experimentFolder)
     filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
     load(filename,'D5','T');
-    
-%     experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-%     cd(experimentFolder)
-%     if strcmp(date,'2017-11-12') == 1
-%         filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
-%     elseif strcmp(expType,'origFluc') == 1
-%         filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
-%     end
-%     load(filename,'D5','T');
-    
     
     
     % 3. compile experiment data matrix
@@ -247,6 +243,15 @@ for e = 1:length(exptArray)
       
     
 end
+
+%16. calculate and plot expected relationships
+mu = linspace(0.5,3.5,100);
+t_div = (1./mu)*60; % mu is in hours, convert t_div to minutes
+
+figure(1)
+hold on
+plot(mu,t_div,'Color',rgb('SlateGray'))
+
 
 
 %% rando lines for plotting PDFs

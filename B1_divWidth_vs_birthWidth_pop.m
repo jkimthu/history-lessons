@@ -15,9 +15,9 @@
 
 
 
-%  Last edit: jen, 2019 Feb 18
+%  Last edit: jen, 2019 Feb 27
 
-%  Commit: first commit, checking 2x relationship between Vdiv and Vbirth
+%  Commit: first commit, checking 2x relationship between Ldiv and Lbirth
 
 
 %  OK let's go!
@@ -39,13 +39,13 @@ exptArray = [2,3,4,5,6,7,9,10,11,12,13,14,15]; % use corresponding dataIndex val
 
 
 % 0. initialize data vectors to store stats for each experiment
-Vdiv_mean = cell(length(exptArray),1);
-Vdiv_std = cell(length(exptArray),1);
-Vdiv_count = cell(length(exptArray),1);
+Wdiv_mean = cell(length(exptArray),1);
+Wdiv_std = cell(length(exptArray),1);
+Wdiv_count = cell(length(exptArray),1);
 
-Vbirth_mean = cell(length(exptArray),1);
-Vbirth_std = cell(length(exptArray),1);
-Vbirth_count = cell(length(exptArray),1);
+Wbirth_mean = cell(length(exptArray),1);
+Wbirth_std = cell(length(exptArray),1);
+Wbirth_count = cell(length(exptArray),1);
 
 
 % 0. initialize colors for plotting
@@ -99,7 +99,7 @@ for e = 1:length(exptArray)
         
         
         % 7. isolate volume, isDrop, curveID and timestamp data
-        volumes = getGrowthParameter(fullData,'volume');
+        widths = getGrowthParameter(fullData,'width');
         isDrop = getGrowthParameter(fullData,'isDrop');     % isDrop == 1 marks a birth event
         curveID = getGrowthParameter(fullData,'curveFinder');
         timestamps_sec = getGrowthParameter(fullData,'timestamp');
@@ -130,18 +130,18 @@ for e = 1:length(exptArray)
         for cc = 1:length(cellCyles_final)
             
             % isolate volume and timestamps for current cell cycle
-            currentVolumes = volumes(curveID == cellCyles_final(cc));
+            currentWidths = widths(curveID == cellCyles_final(cc));
             currentTimestamps = timestamps_hr(curveID == cellCyles_final(cc));
             
-            ccData(cc,1) = currentVolumes(1);       % V_birth
-            ccData(cc,2) = currentVolumes(end);     % V_division
-            ccData(cc,3) = currentVolumes(end) - currentVolumes(1); % added volume
+            ccData(cc,1) = currentWidths(1);       % V_birth
+            ccData(cc,2) = currentWidths(end);     % V_division
+            ccData(cc,3) = currentWidths(end) - currentWidths(1); % added volume
             ccData(cc,4) = currentTimestamps(1);    % T_birth
             ccData(cc,5) = currentTimestamps(end);  % T_division
             ccData(cc,6) = currentTimestamps(end) - currentTimestamps(1); % interdivision time
             
         end
-        clear cc volumes timestamps_hr isDrop curveID currentVolumes currentTimestamps cellCyles_final
+        clear cc lengths timestamps_hr isDrop curveID currentWidths currentTimestamps cellCyles_final
         
         
         % 12. isolate inter-division time data and calculate stats
@@ -166,53 +166,53 @@ for e = 1:length(exptArray)
         %     b) id median and std of birth size
         %     c) find indeces in both vectors that are within 3 std
         %     d) keep data from indeces in both vectors
-        V_birth = ccData_final(:,1);
-        V_div = ccData_final(:,2);
+        W_birth = ccData_final(:,1);
+        W_div = ccData_final(:,2);
         interdiv = ccData_final(:,6);
         
-        divSize_median = median(V_div); 
-        divSize_std = std(V_div);
+        divSize_median = median(W_div); 
+        divSize_std = std(W_div);
         
-        birthSize_median = median(V_birth); 
-        birthSize_std = std(V_birth);
+        birthSize_median = median(W_birth); 
+        birthSize_std = std(W_birth);
         
-        div_bigOutlier = find(V_div > (divSize_median+divSize_std*3));
-        div_smallOutlier = find(V_div < (divSize_median-divSize_std*3));
+        div_bigOutlier = find(W_div > (divSize_median+divSize_std*3));
+        div_smallOutlier = find(W_div < (divSize_median-divSize_std*3));
         div_outliers = [div_bigOutlier; div_smallOutlier];
         
-        birth_bigOutlier = find(V_birth > (birthSize_median+birthSize_std*3));
-        birth_smallOutlier = find(V_birth < (birthSize_median-birthSize_std*3));
+        birth_bigOutlier = find(W_birth > (birthSize_median+birthSize_std*3));
+        birth_smallOutlier = find(W_birth < (birthSize_median-birthSize_std*3));
         birth_outliers = [birth_bigOutlier; birth_smallOutlier];
 
-        V_division_binary = ones(length(V_div),1);
-        V_division_binary(div_outliers) = 0;
+        W_division_binary = ones(length(W_div),1);
+        W_division_binary(div_outliers) = 0;
         
-        V_birth_binary = ones(length(V_birth),1);
-        V_birth_binary(birth_outliers) = 0;
+        W_birth_binary = ones(length(W_birth),1);
+        W_birth_binary(birth_outliers) = 0;
         
-        V_summed = V_division_binary + V_birth_binary;
+        W_summed = W_division_binary + W_birth_binary;
         
-        V_division_final = V_div(V_summed == 2);
-        V_birth_final = V_birth(V_summed == 2);
-        interdiv_final = interdiv(V_summed == 2);
+        W_division_final = W_div(W_summed == 2);
+        W_birth_final = W_birth(W_summed == 2);
+        interdiv_final = interdiv(W_summed == 2);
        
         clear birthSize_median birthSize_std divSize_median divSize_std
         clear div_bigOutlier div_smallOutlier birth_bigOutlier birth_smallOutlier
-        clear V_birth_binary V_division_binary birth_outliers div_outliers V_div V_birth V_summed interdiv
+        clear W_birth_binary W_division_binary birth_outliers div_outliers W_div W_birth W_summed interdiv
         
         
                 
         % 13. calculate mean and standard deviation of birth and division volume
-        Vbirth_mean{e} = mean(V_birth_final);
-        Vbirth_std{e} = std(V_birth_final);
-        counts{3} = length(V_birth_final);
+        Wbirth_mean{e,condition} = mean(W_birth_final);
+        Wbirth_std{e,condition} = std(W_birth_final);
+        counts{3} = length(W_birth_final);
         
-        Vdiv_mean{e} = mean(V_division_final);
-        Vdiv_std{e} = std(V_division_final);
+        Wdiv_mean{e,condition} = mean(W_division_final);
+        Wdiv_std{e,condition} = std(W_division_final);
         
         interdiv_final_min = interdiv_final.*60;
-        interdiv_mean{e} = mean(interdiv_final_min);
-        interdiv_std{e} = std(interdiv_final_min);
+        interdiv_mean{e,condition} = mean(interdiv_final_min);
+        interdiv_std{e,condition} = std(interdiv_final_min);
         clear interdiv_final
         
         
@@ -236,26 +236,26 @@ for e = 1:length(exptArray)
         % 15. plot!
         % (i) division size vs. birth size
         figure(1)
-        errorbar(Vbirth_mean{e},Vdiv_mean{e},Vdiv_std{e},'Color',color)
+        errorbar(Wbirth_mean{e,condition},Wdiv_mean{e,condition},Wdiv_std{e,condition},'Color',color)
         hold on
-        plot(Vbirth_mean{e},Vdiv_mean{e},'Marker',xmark,'Color',color)
+        plot(Wbirth_mean{e,condition},Wdiv_mean{e,condition},'Marker',xmark,'Color',color)
         hold on
-        xlabel('birth size (cubic um)')
-        ylabel('division size (cubic um)')
+        xlabel('birth width (um)')
+        ylabel('division width (cubic um)')
         title('population averages from all experiments')
-        axis([1 7 0 16])
+        axis([0 2 0 2])
         
         
         % (ii) inter-division time vs. birth size
         figure(2)
-        errorbar(Vbirth_mean{e},interdiv_mean{e},interdiv_std{e},'Color',color)
+        errorbar(Wbirth_mean{e,condition},interdiv_mean{e,condition},interdiv_std{e,condition},'Color',color)
         hold on
-        plot(Vbirth_mean{e},interdiv_mean{e},'Marker',xmark,'Color',color)
+        plot(Wbirth_mean{e,condition},interdiv_mean{e,condition},'Marker',xmark,'Color',color)
         hold on
-        xlabel('birth size (cubic um)')
+        xlabel('birth width (um)')
         ylabel('inter-division time (min)')
         title('population averages from all experiments')
-        axis([0 10 0 100])
+        axis([0 2 0 80])
         
         
     end
@@ -266,12 +266,13 @@ end
 
 % expectations
 expected_color = rgb('Silver');
-expected_Vb = linspace(1,8,8);
-expected_Vdiv = 2* expected_Vb ;
+expected_Size_b = linspace(0,2,10);
+expected_Size_div = ones(length(expected_Size_b));
 
 figure(1)
 hold on
-plot(expected_Vb,expected_Vdiv,'-','Color',expected_color);
+plot(expected_Size_b,expected_Size_div,'-','Color',expected_color);
+saveas(gcf,'B1_width_fig1.fig')
 
-
-
+figure(2)
+saveas(gcf,'B1_width_fig2.fig')
