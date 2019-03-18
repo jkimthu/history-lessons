@@ -17,7 +17,7 @@
 
 %  Last edit: jen, 2019 Feb 27
 
-%  Commit: first commit, checking 2x relationship between Ldiv and Lbirth
+%  Commit: first commit, checking 2x relationship between Wdiv and Wbirth
 
 
 %  OK let's go!
@@ -243,7 +243,7 @@ for e = 1:length(exptArray)
         xlabel('birth width (um)')
         ylabel('division width (cubic um)')
         title('population averages from all experiments')
-        axis([0 2 0 2])
+        axis([1 1.6 1 1.6])
         
         
         % (ii) inter-division time vs. birth size
@@ -255,7 +255,7 @@ for e = 1:length(exptArray)
         xlabel('birth width (um)')
         ylabel('inter-division time (min)')
         title('population averages from all experiments')
-        axis([0 2 0 80])
+        axis([1 1.6 0 80])
         
         
     end
