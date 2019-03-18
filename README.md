@@ -31,7 +31,8 @@ C1. Traits associated with being above or below average in interdivision size
 
 
 C2. Traits binned by nutrient phase at birth
+	- nutrient phase defines the start of the low as the first bin (bin 1) and the start of the high being the the start of the second half of bins (if 24 bins total, high phase starts at bin 13) 
 
 
 
-B. Distributions of interdivision times binned by nutrient phase at birth
+D. Bootstrap hypothesis testing of test statistics between a single lineage and random subsamples from the whole population

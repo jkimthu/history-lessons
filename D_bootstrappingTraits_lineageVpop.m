@@ -1,11 +1,16 @@
-%% Figure C1: traits associated with being above or below average _ division size
+%% Figure D: bootstrapping to determine whether lineage history influences cell cycle traits
+
 
 %  Goal: for a given experiment,
 %
-%        1.  determine the mean size at division
-%        2.  plot the distribution
-%        3.  split condition data into two populations: above and below average
-%        4.  compare the mean value for a variety of traits
+%        1.  pull out a lineage with maximum number of cell cycles
+%        2.  determine traits (including nutrient history) for each cycle
+%        3.  use bootstrapping hypothesis testing to re-sample population
+%        4.  determine probability of getting something more extreme than
+%            observed lineage (p-value)
+%        5.  population subsample should take nutrient scores of lineage
+%            sample into account
+
 
 
 %  Traits of interest: 
@@ -13,14 +18,14 @@
 %       a) interdivision time
 %       b) birth size
 %       c) V_div/V_birth ratio
-%       d) mean growth rate of cell cycle / mean growth rate of population
+%       d) mean growth rate of cell cycle
 %       e) nutrient score
-%       f) cell cycle fraction at the point of a shift (shift stage)
 
 
 
-%  Last edit: jen, 2019 Mar 8
-%  Commit: first commit, not yet including nutrient score or shift stage
+
+%  Last edit: jen, 2019 Mar 17
+%  Commit: first commit, 
 
 
 %  OK let's go!
@@ -43,7 +48,7 @@ specificColumn = 3;             % for selecting appropriate column in growthRate
 
 
 % 0. initialize array of experiments to use in analysis, then loop through each
-exptArray = 10:15; % use corresponding dataIndex values
+exptArray = 13:15; % use corresponding dataIndex values
 
 
 % 0. initialize colors for plotting
@@ -51,6 +56,26 @@ palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
 palette_below = {'LightSkyBlue','BlueViolet','Gold','LightCoral'};
 
 
+% 0. initialize nutrient signal classifications
+classRules = [ 0,0,0,0,0; ... % 1  only low
+    1,0,0,0,0; ...            % 2
+    1,1,0,0,0; ...            % 3
+    1,1,1,0,0; ...            % 4
+    1,1,1,1,0; ...            % 5
+    1,1,1,1,1; ...            % 6   only high
+    0,1,1,1,1; ...            % 7
+    0,0,1,1,1; ...            % 8
+    0,0,0,1,1; ...            % 9
+    0,0,0,0,1; ...            % 10
+    1,0,0,0,1; ...            % 11
+    1,0,0,1,1; ...            % 12
+    1,1,0,0,1; ...            % 13
+    1,1,0,1,1; ...            % 14  impossible?
+    0,1,1,1,0; ...            % 15
+    0,1,1,0,0; ...            % 16
+    0,0,1,1,0; ...            % 17
+    0,0,1,0,0; ...            % 18  impossible?
+    ];
 
 %%
 
@@ -113,42 +138,46 @@ for e = 1:length(exptArray)
         % 8. trim condition and growth rate data to include only full cell cycles
         fullData = conditionData(curveID > 0,:);
         growthRates_fullOnly = growthRates(curveID > 0,:);
+  
         
-                
-        %nData = nutrientScore(timescale,fullData);
+        
+        % 9. calculate binary nutrient signals
         [binaryNutrientSignal, nScore] = nutrientScore(timescale,fullData);
-        clear conditionData curveID growthRates
+        clear conditionData curveID growthRates growthRates_all
         
         
         
-        % 9. isolate volume, isDrop, curveID and timestamp data
+        % 10. isolate volume, isDrop, curveID, trackNum and timestamp data
         volumes = getGrowthParameter(fullData,'volume');
         isDrop = getGrowthParameter(fullData,'isDrop');     % isDrop == 1 marks a birth event
         curveIDs = getGrowthParameter(fullData,'curveFinder');
+        trackNum = getGrowthParameter(fullData,'trackNum');   
         timestamps_sec = getGrowthParameter(fullData,'timestamp');
         timestamps_hr = timestamps_sec./3600;               % timestamp in seconds converted to hours, for time-based trim
         clear timestamps_sec
         
         
-        % 10. identity unique cell cycles by ID number
+        % 11. identity unique cell cycles by ID number
         cellCycles = curveIDs(isDrop == 1);
         birthTimes = timestamps_hr(isDrop == 1);
+        tracks = trackNum(isDrop == 1);
         clear fullData
         
         
-        % 11. remove birth times prior to 3 hr
+        % 12. remove birth times prior to 3 hr
         birthTimes_post3 = birthTimes(birthTimes > 3);
         cellCycles_post3 = cellCycles(birthTimes > 3);
-        clear cellCycles birthTimes
+        tracks_post3 = tracks(birthTimes > 3);
+        clear cellCycles birthTimes tracks
         
         
-        % 12. remove birth times post bubbles
-        birthTimes_final = birthTimes_post3(birthTimes_post3 < bubbletime(condition));
+        % 13. remove birth times post bubbles
         cellCyles_final = cellCycles_post3(birthTimes_post3 < bubbletime(condition));
-        clear cellCycles_post3 birthTimes_post3 birthTimes_final
+        tracks_final = tracks_post3(birthTimes_post3 < bubbletime(condition));
+        clear cellCycles_post3 birthTimes_post3 tracks_post3
         
         
-        % 13. for remaining cell cycles, identify:
+        % 14. for remaining cell cycles, identify:
         %       1. volume at birth
         %       2. volume at division
         %       3. interdivision time
@@ -163,6 +192,8 @@ for e = 1:length(exptArray)
             currentGrowthRates = growthRates_fullOnly(curveIDs == cellCyles_final(cc));
             currentBinarySignal = binaryNutrientSignal(curveIDs == cellCyles_final(cc));
             currentNscore = nScore(curveIDs == cellCyles_final(cc));
+            currentTrack = tracks_final(cc);
+            currentCC = cellCyles_final(cc);
             
             if length(unique(currentNscore)) ~= 1
                 error('Nscore in current cell cycle is not unique: error in calling cell cycle or score')
@@ -179,7 +210,8 @@ for e = 1:length(exptArray)
             ccData(cc,9) = currentNscore(1);               % nScore
             
             
-            %ccSignal{cc,1} = currentBinarySignal;        % binary signal (1 = high, 0 = low)
+            ccSignal{cc,1} = currentBinarySignal;        % binary signal (1 = high, 0 = low)
+            
             
             isSwitch = [0; diff(currentBinarySignal)] ~= 0;
             numShifts = sum(isSwitch);
@@ -194,24 +226,45 @@ for e = 1:length(exptArray)
             
             ccData(cc,10) = numShifts;
             ccData(cc,11) = shiftStage; % first if multiple
+            ccData(cc,12) = currentTrack;
+            ccData(cc,13) = currentCC;
+            
+            
+            % classify binary signal
+            
+            % bin cell cycle into 5ths,
+            % considering 5ths as "high N" if over half includes high nutrient
+            fractions = linspace(1,length(currentBinarySignal),length(currentBinarySignal))/length(currentBinarySignal);
+            bins = ceil(fractions'*5);
+            binned = round(accumarray(bins,currentBinarySignal,[],@mean));
+            
+            % classify signal
+            for cl = 1:length(classRules)
+                currentClass = classRules(cl,:);
+                if isequal(binned',currentClass) == 1
+                    ccData(cc,14) = cl;
+                    break
+                end
+            end
+            
             
         end
         clear cc volumes timestamps_hr isDrop curveIDs growthRates_fullOnly 
         clear currentGrowthRates currentVolumes currentTimestamps cellCyles_final 
         clear binaryNutrientSignal nScore currentBinarySignal currentNscore
-        clear isSwitch numShifts shiftStage
+        clear isSwitch numShifts shiftStage currentTrack trackNum tracks_final currentCC
+        clear bins fractions binned currentClass cl
         
         
-        
-        % 14. trim cell cycle data to avoid single point cell cycles
+        % 15. trim cell cycle data to avoid single point cell cycles
         addedVol = ccData(:,3);
         traits = ccData(addedVol > 0,:);
-        %signal = ccSignal(addedVol > 0,:);
+        signal = ccSignal(addedVol > 0,:);
         clear ccData addedVol ccSignal
         
         
         
-        % 15. exclude outliers based on cell size (both birthsize and divsize)
+        % 16. exclude outliers based on cell size (both birthsize and divsize)
         %     a) id median and std of division size
         %     b) id median and std of birth size
         %     c) find indeces in both vectors that are within 3 std
@@ -242,134 +295,128 @@ for e = 1:length(exptArray)
         V_summed = V_division_binary + V_birth_binary;
         
         traits_final = traits(V_summed == 2,:);
-        %signal_final = signal(V_summed == 2,:);
-        switches_final = switches(V_summed == 2,:);
+        signal_final = signal(V_summed == 2,:);
         
         clear birthSize_median birthSize_std divSize_median divSize_std
         clear div_bigOutlier div_smallOutlier birth_bigOutlier birth_smallOutlier
         clear V_birth_binary V_division_binary birth_outliers div_outliers V_div V_birth V_summed interdiv
+        clear switches
         
+
         
-        
-        % plot distribution of volume at division
-        
-        
-        % 16. bin data and normalize bin counts by total counts
+        % 17. qq plots to determine whether data has normal distribution
         divSize = traits_final(:,2);
-        divSize_counts = length(divSize);
-        binSize = 0.3;
-        assignedBins_raw = ceil(divSize/binSize);
-        clear traits
+        interDiv = traits_final(:,6);
+        mu = traits_final(:,7);
+        
+        figure(1)
+        qqplot(divSize)
+        
+        figure(2)
+        qqplot(interDiv)
+        
+        figure(3)
+        qqplot(mu)
+        clear mu interDiv divSize
+        
+        
+        % 18. bootstrap hypothesis testing!
+        % note: still need to justify exclusion of interdiv times < 10 visually
+        interdivs = traits_final(:,6)*60;
+        traits_10plus = traits_final(interdivs > 10,:);
+        signals_10plus = signal_final(interdivs > 10,:);
+        clear signal_final traits_final signal traits
+        
+        classifications = traits_10plus(:,14);
         
         % some conditions do not have data after trimming
-        if isempty(traits_final) == 1
+        if isempty(traits_10plus) == 1
             
-            filler = linspace(2,6,30);
-            
-            figure(1)
-            plot(filler,zeros(length(filler)),'Color',color,'LineWidth',1)
-            hold on
-            legend('fluc','low','ave','high')
-            title('raw pdf')
-            xlabel('division size (cubic um)')
-            ylabel('pdf')
-            
-            
-            
-            filler = zeros(5,2);
-            
-            figure(condition+1)
-            bar(filler)
-            title(strcat('traits of subpopulations: condition-',num2str(condition)))
-            
-            clear filler color
+            % filler
             
         else
             
-            % 17. calculate pdf
-            binned_divSize_raw = accumarray(assignedBins_raw, divSize, [], @(x) {x});
-            binCounts_raw = cellfun(@length,binned_divSize_raw);
-            pdf_divSize_raw = binCounts_raw./divSize_counts;
-            clear binned_divSize_raw binCounts_raw divSize_counts
+            % A.  pull out a lineage with 4 or 5 cell cycles
+            lineages = traits_10plus(:,12);
+            uniqueLines = unique(lineages);
+            uniqueCounts = hist(lineages,uniqueLines);
+            
+            % start with 5 consequtive, then 4
+            longLines = uniqueLines(uniqueCounts == 5);
+            numCC = 5;
+            if isempty(longLines) == 1
+                longLines = uniqueLines(uniqueCounts == 4);
+                numCC = 4;
+            end
+            clear uniqueLines uniqueCounts
+            
+            
+            % B.  use bootstrapping hypothesis testing to determine
+            %     likelihood for each long lineage
+            for l = 1:length(longLines)
+                
+                
+                % i. determine traits for each cycle within lineage
+                currentLine = longLines(l);
+                currentTraits = traits_10plus(lineages == currentLine,:);
+                currentClasses = currentTraits(:,14);
+                
+                
+                % ii. if lineage cell cycles are not consecutive, note this!
+                currentCycles = currentTraits(:,13);
+                isConsecutive = diff(currentCycles);
+                if mean(isConsecutive) ~= 1
+                    disp(strcat('Cell cycles in lineage (',num2str(currenLine),') are not consecutive!'))
+                end
+                clear currentCycles isConsecutive
+                
+                
+                % iii. generate random subsampling from entire population,
+                %      repeat 100000 times
+                repeats = 100000;
+                subSampled_means = nan(5,repeats);
+                
+                for i = 1:repeats
+                    
+                    % collect subsampled population
+                    sPop = nan(numCC,14);
+                    for sample = 1:numCC
+                        
+                        sClass = currentClasses(sample);
+                        sClass_idx = traits_10plus(classifications==sClass,:);
+                        %sClass_signals = signal_10plus(classifications==sClass,:);
+                        
+                        row = randi(length(sClass_idx)); % random number generator from a uniform distribution of range 1 to length of sClass list
+                        sPop(sample,:) =  sClass_idx(row,:);
+                        
+                    end
+                    clear row sClass_idx sClass sample
+                    
+                    % average test statistics
+                    sPop_mean = mean(sPop);
+                    subSampled_means(i,1) = sPop_mean(6)*60; % interdivision time (min)
+                    subSampled_means(i,2) = sPop_mean(1); % birth size
+                    subSampled_means(i,3) = sPop_mean(2)/sPop_mean(1); % V_div/V_birth ratio
+                    subSampled_means(i,4) = sPop_mean(7); % mean growth rate of cell cycle
+                    subSampled_means(i,5) = sPop_mean(9); % nutrient score
+                    
+                end
+                
+                save(strcat('D2_',date,'.mat'),'traits_10plus','signals_10plus','subSampled_means','exptData')
+                
+                % iv. determine probability of getting something more
+                %     extreme than observed lineage (p-value)
+                
+                
+                
+            end
+            
+
             
             
             % 18. plot PDF
             raw_vals = (1:max(assignedBins_raw)).*binSize; % raw division sizes
-            
-%             figure(1)
-%             plot(raw_vals,pdf_divSize_raw,'Color',color,'LineWidth',1)
-%             hold on
-%             title('raw pdf')
-%             legend('fluc','low','ave','high')
-%             xlabel('division size (cubic um)')
-%             ylabel('pdf')
-            
-            clear assignedBins_raw raw_vals pdf_divSize_raw
-            
-            % split condition data into two populations: above and below average
-            
-            divSize_mean = mean(divSize);
-            divSize_std = std(divSize);
-            
-            sizeThresh_above = divSize_mean + divSize_std;
-            sizeThres_below = divSize_mean - divSize_std;
-            
-            traits_above = traits_final(divSize > sizeThresh_above,:);
-            traits_below = traits_final(divSize < sizeThres_below,:);
-            
-            
-            % compare the mean value for a variety of traits
-            
-            % for a bar graph with paired entries (one value per subpop):
-            % make a matrix with two columns (one for each subpop) and one row per trait
-            
-            % row 1) interdivision time
-            %     2) birth size
-            %     3) V_div/V_birth ratio
-            %     4) mean growth rate of cell cycle
-            %     5) mean growth rate of cell cycle / mean growth rate of population
-            %     6) nutrient score
-            %     7) cell cycle fraction at the point of a shift (shift stage)
-            
-           
-            
-            trait_comparison = [ ...
-                
-            mean(traits_above(:,6)), mean(traits_below(:,6)); ... % interdiv
-            mean(traits_above(:,1)), mean(traits_below(:,1)); ... % birth size
-            mean(traits_above(:,2)./traits_above(:,1)), mean(traits_below(:,2)./traits_below(:,1)); ... % V_div / V_birth
-            mean(traits_above(:,7)), mean(traits_below(:,7)); ... % mean growth rate
-            mean(traits_above(:,9)), mean(traits_below(:,9)); ... % nScore
-            nanmean(traits_above(:,10)), nanmean(traits_below(:,10)); ... % numShifts
-            nanmean(traits_above(:,11)), nanmean(traits_below(:,11)); ... % cell cycle stage of shift
-           
-            ];
-        
-        
-            trait_comparison_error = [ ...
 
-            std(traits_above(:,6)), std(traits_below(:,6)); ... % interdiv
-            std(traits_above(:,1)), std(traits_below(:,1)); ... % birth size
-            std(traits_above(:,2)./traits_above(:,1)), std(traits_below(:,2)./traits_below(:,1)); ... % V_div / V_birth
-            std(traits_above(:,7)), std(traits_below(:,7)); ... % mean growth rate
-            std(traits_above(:,9)), std(traits_below(:,9)); ... % nScore
-            nanstd(traits_above(:,10)), nanstd(traits_below(:,10)); ... % numShifts
-            nanstd(traits_above(:,11)), nanstd(traits_below(:,11)); ... % cell cycle stage of shift
-
-            ];
-    
-
-            figure(condition+1)
-            b = bar(trait_comparison);
-            hold on
-            errorbar([0.85,1.15; 1.85,2.15; 2.85,3.15; 3.85,4.15; 4.85,5.15; 5.85,6.15; 6.85,7.15],trait_comparison,trait_comparison_error,'.','Color',rgb('Black'))
-            title(strcat('traits of subpopulations: condition-',num2str(condition)))
-            
-            b(1).FaceColor = color;
-            b(2).FaceColor = color_b;
-
-            clear trait_comparison trait_comparison_error
-    
     
         end
         
