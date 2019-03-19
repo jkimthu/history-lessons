@@ -1,4 +1,4 @@
-%% Figure B1: mean V_div  vs mean V_birth
+%% Figure B2: mean V_div  vs mean V_birth
 
 
 %  Goal: plot a heated scatter of single-cell division size vs birth size.
@@ -15,8 +15,8 @@
 
 
 
-%  Last edit: jen, 2019 February 18
-%  Commit: first commit, full and heatmap scatter plots for each condition
+%  Last edit: jen, 2019 March 19
+%  Commit: full and heatmap scatter plots prior to steady-state
 
 
 
@@ -28,7 +28,7 @@ clc
 clear
 
 % 0. initialize complete meta data
-cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+%cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 
 % 0. initialize axes limits for plotting
@@ -41,7 +41,7 @@ environment = {'fluc','low','ave','high'};
 
 %%
 % 1. for all experiments in dataset
-exptArray = [2,3,4];
+exptArray = [13:15];
 
 for e = 1:length(exptArray)
     
@@ -54,13 +54,13 @@ for e = 1:length(exptArray)
     
     
     % 2. load measured data
-    experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-    cd(experimentFolder)
-    if strcmp(date,'2017-11-12') == 1
-        filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
-    else
+%    experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
+%    cd(experimentFolder)
+%    if strcmp(date,'2017-11-12') == 1
+%        filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
+%    else
         filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
-    end
+%    end
     load(filename,'D5','T');
     
     
@@ -97,14 +97,9 @@ for e = 1:length(exptArray)
         birthTimes = timestamp_hr(isDrop == 1);
         
         
-        % 9. remove birth times prior to 3 hr
-        birthTimes_post3 = birthTimes(birthTimes > 3); 
-        unique_cc_post3 = unique_cc(birthTimes > 3); 
-        
-        
-        % 10. remove birth times post bubbles
-        birthTimes_final = birthTimes_post3(birthTimes_post3 < bubbletime(condition));
-        unique_cc_final = unique_cc_post3(birthTimes_post3 < bubbletime(condition));
+        % 10. remove birth times post 2.5h
+        birthTimes_final = birthTimes(birthTimes < 2.5);
+        unique_cc_final = unique_cc(birthTimes < 2.5);
         
         
         
@@ -236,14 +231,14 @@ for e = 1:length(exptArray)
     end
     
     % 16. save plots in active folder
-    cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
+    %cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
     figure(4)
-    plotName = strcat('figure4-div-v-birth-',date,'-noBinning');
+    plotName = strcat('figure4-div-v-birth-prior2ss-',date,'-noBinning');
     saveas(gcf,plotName,'epsc')
     close(gcf)
     
     figure(5)
-    plotName = strcat('figure4-div-v-birth-',date,'-',num2str(binsPerMicron),'binsPerMicron');
+    plotName = strcat('figure4-div-v-birth-prior2ss-',date,'-',num2str(binsPerMicron),'binsPerMicron');
     saveas(gcf,plotName,'epsc')
     close(gcf)
     clc
