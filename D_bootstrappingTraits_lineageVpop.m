@@ -24,9 +24,9 @@
 
 
 
-%  Last edit: jen, 2019 Mar 18
+%  Last edit: jen, 2019 Mar 19
 %  Commit: test statistic is standard deviation of 5 traits, lineage length
-%  is 5 cell cycles
+%  is 4 cell cycles
 
 
 %  OK let's go!
@@ -335,11 +335,15 @@ for e = 1:length(exptArray)
     
     % plot distribution of nutrient signal classifications
     classifications = traits_10plus(:,14);
+    figure(1)
     hist(classifications,15)
     title(strcat('Histogram of nutrient signal classifications :',date))
     ylabel('Frequency')
     xlabel('Signal class')
     xlim([0 18])
+    plotName = strcat('D-histogram-nClass-',date,'-c',num2str(condition));
+    saveas(gcf,plotName,'epsc')
+    close(gcf)
 
     
     % some conditions do not have data after trimming
@@ -355,7 +359,7 @@ for e = 1:length(exptArray)
         uniqueCounts = hist(lineages,uniqueLines);
         
         % start with 5 consequtive, then 4
-        numCC = 5;
+        numCC = 4;
         longLines = uniqueLines(uniqueCounts == numCC);
         clear uniqueLines uniqueCounts
         
@@ -485,7 +489,7 @@ for e = 1:length(exptArray)
         
     end
     
-    save(strcat('D-',date,'-std-c1-length5'),'pVals','lineage_stds')
+    save(strcat('D-',date,'-std-c1-length4'),'pVals','lineage_stds')
     
     clear signals_10plus traits_10plus classifications
     clear pVals lineage_means interdivs
