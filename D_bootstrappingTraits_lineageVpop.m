@@ -229,8 +229,8 @@ for e = 1:length(exptArray)
         % bin cell cycle into 5ths,
         % considering 5ths as "high N" if over half includes high nutrient
         fractions = linspace(1,length(currentBinarySignal),length(currentBinarySignal))/length(currentBinarySignal);
-        bins = ceil(fractions'*5);
-        binned = round(accumarray(bins,currentBinarySignal,[],@mean));
+        bins_percent = ceil(fractions'*5);
+        binned = round(accumarray(bins_percent,currentBinarySignal,[],@mean));
         
         % classify signal
         for cl = 1:length(classRules)
@@ -497,4 +497,32 @@ for e = 1:length(exptArray)
 end
 clear specificColumn bubbletime repeats
 
+%%
 
+directory = dir(strcat('D*.mat'));
+names = {directory.name};
+trait_name = {'tau','Vbirth','ratio','mu','nScore'};
+
+
+for i = 1:length(names)
+    
+    load(names{i})
+
+    figure()
+    for trait = 1:5
+        
+        subplot(1,5,trait)
+        hist(pVals(:,trait))
+        title(trait_name{trait})
+        xlim([0 1])
+        
+        if trait == 3
+            xlabel(names{i})
+        end
+        
+    end
+    plotName = strcat('D-pVals-directory-',num2str(i));
+    saveas(gcf,plotName,'epsc')
+    close(gcf)
+    
+end
