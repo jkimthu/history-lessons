@@ -116,7 +116,7 @@ for e = 1:length(exptArray)
         % 9. remove birth times post 2.5 h
         birthTimes_final = birthTimes(birthTimes < 2.5);
         cellCyles_final = cellCycles(birthTimes < 2.5);
-        clear birthTimes_final cellCycles birthTimes
+        clear cellCycles birthTimes
         
         
         % 10. for remaining cell cycles, identify volume at birth and at division of each
@@ -136,7 +136,7 @@ for e = 1:length(exptArray)
             ccData(cc,6) = currentTimestamps(end) - currentTimestamps(1); % interdivision time
             
         end
-        clear cc volumes timestamps_hr isDrop curveID currentVolumes currentTimestamps cellCyles_final
+        clear cc volumes timestamps_hr isDrop curveID currentVolumes currentTimestamps 
         
         
         % 11. isolate inter-division time data and calculate stats
