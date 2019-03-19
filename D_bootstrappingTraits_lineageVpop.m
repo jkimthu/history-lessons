@@ -26,7 +26,7 @@
 
 %  Last edit: jen, 2019 Mar 18
 %  Commit: test statistic is standard deviation of 5 traits, lineage length
-%  is 2 cell cycles
+%  is 5 cell cycles
 
 
 %  OK let's go!
@@ -355,7 +355,7 @@ for e = 1:length(exptArray)
         uniqueCounts = hist(lineages,uniqueLines);
         
         % start with 5 consequtive, then 4
-        numCC = 2;
+        numCC = 5;
         longLines = uniqueLines(uniqueCounts == numCC);
         clear uniqueLines uniqueCounts
         
@@ -485,7 +485,7 @@ for e = 1:length(exptArray)
         
     end
     
-    save(strcat('D-',date,'-std-c1-length2'),'pVals','lineage_stds')
+    save(strcat('D-',date,'-std-c1-length5'),'pVals','lineage_stds')
     
     clear signals_10plus traits_10plus classifications
     clear pVals lineage_means interdivs
