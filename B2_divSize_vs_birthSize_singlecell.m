@@ -16,7 +16,8 @@
 
 
 %  Last edit: jen, 2019 March 19
-%  Commit: full and heatmap scatter plots prior to steady-state
+%  Commit: full and heatmap scatter plots prior to steady-state, sort by
+%  div time not birth time
 
 
 
@@ -41,7 +42,7 @@ environment = {'fluc','low','ave','high'};
 
 %%
 % 1. for all experiments in dataset
-exptArray = [13:15];
+exptArray = 13:15;
 
 for e = 1:length(exptArray)
     
@@ -108,22 +109,32 @@ for e = 1:length(exptArray)
         V_division = nan(length(unique_cc_final),1);
         V_birth = nan(length(unique_cc_final),1);
         cc_lengths = nan(length(unique_cc_final),1);
+        t_division = nan(length(unique_cc_final),1);
         
         for cc = 1:length(unique_cc_final)
             
             currentVolumes = volume(curveFinder == unique_cc_final(cc));
+            currentTime = timestamp_hr(curveFinder == unique_cc_final(cc));
+            
             cc_lengths(cc,1) = length(currentVolumes);
             V_division(cc,1) = currentVolumes(end);
             V_birth(cc,1) = currentVolumes(1);
+            t_division(cc,1) = currentTime(end);
             
         end
         clear cc
         
         
+        % 12. trim divisions earlier than 2.5 hours
+        V_division_prior = V_division(t_division < 2.5);
+        V_birth_prior = V_birth(t_division < 2.5);
+        cc_lengths_prior = cc_lengths(t_division < 2.5);
         
         % 12. trim cell cycles shorter than 6 timepoints
-        V_division_6plus = V_division(cc_lengths > 5);
-        V_birth_6plus = V_birth(cc_lengths > 5);
+        V_division_6plus = V_division_prior(cc_lengths_prior > 5);
+        V_birth_6plus = V_birth_prior(cc_lengths_prior > 5);
+        
+        
         
         
         
@@ -233,12 +244,12 @@ for e = 1:length(exptArray)
     % 16. save plots in active folder
     %cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
     figure(4)
-    plotName = strcat('figure4-div-v-birth-prior2ss-',date,'-noBinning');
+    plotName = strcat('figure4-div-v-birth-sortByDiv-prior2ss-',date,'-noBinning');
     saveas(gcf,plotName,'epsc')
     close(gcf)
     
     figure(5)
-    plotName = strcat('figure4-div-v-birth-prior2ss-',date,'-',num2str(binsPerMicron),'binsPerMicron');
+    plotName = strcat('figure4-div-v-birth-sortByDiv-prior2ss-',date,'-',num2str(binsPerMicron),'binsPerMicron');
     saveas(gcf,plotName,'epsc')
     close(gcf)
     clc
