@@ -16,7 +16,10 @@ A2. Mean birth size vs. mean growth rate
 B1. Mean division size vs mean birth size, population level
 
 
-B2. Division size vs. birth size, single-cell
+B2. Division size vs. birth size, single-cell (heated scatter plot)
+	- trimmed for steady-state (post 3 hrs) based on birth time
+	- for prior to steady-state, trimming by birth time gives 2x
+	- for prior to steady-state, trimming by division time (< 2.5h) gives....
 
 
 C1. Traits associated with being above or below average in interdivision size
