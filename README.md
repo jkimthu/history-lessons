@@ -39,3 +39,30 @@ C2. Traits binned by nutrient phase at birth
 
 
 D. Bootstrap hypothesis testing of test statistics between a single lineage and random subsamples from the whole population
+
+
+E & F. assess traits by nutrient signal classifications
+		- classifications are performed by sectioning signal into 5ths
+		- these 5ths are assigned "high" or "low" based on the majority signal
+		- the binary sequence of these fifths are given a class number, by which cell cycles are binned
+		- the cell cycle stats or "traits" are measured then for each class bin
+
+		Program E does one condition per designated set of experiments and produces a plot for each experiment, of trait mean and stdev by class.
+
+		Program F compiles cell cycles from each listed experiment and produces a single plot for all data. This plot compares signals by splitting classifications into two more data points:
+			1. fraction of signal spent in high
+			2. signal type: low to high, high to low, high-low-high, low-high-low
+
+		Both programs, given the manner in which classifications are defined, only function with data from 60 min periods. A new classification scheme needs to be developed to consider other data, including 15 min periods.
+
+
+
+G. size vs time (at birth, at division, added)
+	- what is the timescales at which cell size stabilizes? how does it compare with that of mu?
+	- to get at this, four plots:
+	1. birth size vs time at birth
+	2. division size vs time at division
+	3. added size vs time at birth
+	4. added size vs time at division
+
+
