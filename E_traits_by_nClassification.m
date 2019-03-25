@@ -21,7 +21,7 @@
 
 
 %  Last edit: jen, 2019 Mar 19
-%  Commit: first commit, 
+%  Commit: 15 min fluc only compiling c1 data
 
 
 %  OK let's go!
@@ -44,7 +44,7 @@ specificColumn = 3;             % for selecting appropriate column in growthRate
 
 
 % 0. initialize array of experiments to use in analysis, then loop through each
-exptArray = 13:15; % use corresponding dataIndex values
+exptArray = 9:12; % use corresponding dataIndex values
 condition = 1;
 
 
@@ -98,6 +98,7 @@ for e = 1:length(exptArray)
     expType = storedMetaData{index}.experimentType;
     bubbletime = storedMetaData{index}.bubbletime;
     timescale = storedMetaData{index}.timescale;
+    xys = storedMetaData{index}.xys;
     disp(strcat(date, ': analyze!'))
     
 
@@ -110,15 +111,14 @@ for e = 1:length(exptArray)
     
     
     % 4. compile experiment data matrix
-    xy_start = min(min(storedMetaData{index}.xys));
-    xy_end = max(max(storedMetaData{index}.xys));
-    exptData = buildDM(D5, T, xy_start, xy_end,index,expType);
+    xy_start = xys(condition,1);
+    xy_end = xys(condition,end);
+    conditionData = buildDM(D5, T, xy_start, xy_end,index,expType);
     clear D5 T xy_start xy_end expType filename
     
     
     
     % 5. isolate condition specific data
-    conditionData = exptData(exptData(:,21) == condition,:);  % col 21 = cond vals
     color = rgb(palette(condition));
     
     
@@ -147,7 +147,7 @@ for e = 1:length(exptArray)
     
     % 9. calculate binary nutrient signals
     [binaryNutrientSignal, nScore] = nutrientScore(timescale,fullData);
-    clear conditionData curveID growthRates growthRates_all
+    clear curveID growthRates growthRates_all
     
     
     
@@ -264,7 +264,7 @@ for e = 1:length(exptArray)
     addedVol = ccData(:,3);
     traits = ccData(addedVol > 0,:);
     signal = ccSignal(addedVol > 0,:);
-    clear ccData addedVol ccSignal
+    clear addedVol
     
     
     
