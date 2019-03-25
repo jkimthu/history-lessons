@@ -34,7 +34,6 @@ clear
 cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 dataIndex = find(~cellfun(@isempty,storedMetaData));
-experimentCount = length(dataIndex);
 
 
 % 0. define method of calculating growth rate
@@ -130,7 +129,8 @@ for e = 1:length(exptArray)
         clear timestamps_sec
         
         
-        % 10. identity unique cell cycles by ID number
+        
+        % 10. identify unique cell cycles by ID number
         cellCycles = curveIDs(isDrop == 1);
         birthTimes = timestamps_hr(isDrop == 1);
         clear fullData
