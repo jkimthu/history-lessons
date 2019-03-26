@@ -8,6 +8,8 @@
 %        plot (2) division volume vs time of division
 %        plot (3) added volume vs time of birth
 %        plot (4) added volume vs time of division
+%        plot (5) interdivision time vs time of birth
+%        plot (6) interdivision time vs time of division
 
 
 %  Strategy: 
@@ -21,7 +23,7 @@
 
 
 %  Last edit: jen, 2019 March 25
-%  Commit: first commit, birth and division volume as a function of time
+%  Commit: add interdivision time as a variable to plot against time
 
 
 
@@ -40,7 +42,7 @@ dataIndex = find(~cellfun(@isempty,storedMetaData));
 
 
 % 0. initialize array of experiments to use in analysis, then loop through each
-exptArray = 22; % use corresponding dataIndex values
+exptArray = 13:15; % use corresponding dataIndex values
 
 
 % 0. initialize parameters for plotting
@@ -50,6 +52,7 @@ binsPerHour = 30;
 
 % 0. initialize data matrix for concatenating between experiments
 cycleData = [];
+
 
 %% Part 1. collect cell cycle data for each experiment in array
 
@@ -217,12 +220,19 @@ for c = 1:4 % condition
         volAdded_binnedByDT = accumarray(bins_div,volume_added,[],@(x) {x});
         clear volume_birth volume_division volume_added
         
+        % 5) interdivision time vs time of birth
+        interdivT = cycleData_cond(:,3);
+        interdiv_binnedByBT = accumarray(bins_birth,interdivT,[],@(x) {x});
         
+        % 6) interdivision time vs time of division
+        interdiv_binnedByDT = accumarray(bins_div,interdivT,[],@(x) {x});
+        clear interdivT
         
         
         % 14. generate time vectors for plotting
         timeVector_BT = (1:length(volBirth_binnedByBT))/binsPerHour;
         timeVector_DT = (1:length(volDiv_binnedByDT))/binsPerHour;
+        
         
         
         
@@ -265,6 +275,23 @@ for c = 1:4 % condition
         ylabel('added volume (cubic um)')
         title('stabilization of added volume')
         axis([0 9.1 0 8])
+        
+        
+        figure(5) % interdiv time vs. time at birth
+        errorbar(timeVector_BT,cellfun(@mean,interdiv_binnedByBT),cellfun(@std,interdiv_binnedByBT),'Color',color)
+        hold on
+        xlabel('time at birth (h)')
+        ylabel('interdivision time (min)')
+        title('stabilization of tau')
+        axis([0 9.1 0 90])
+        
+        figure(6) % interdiv time vs. time at division
+        errorbar(timeVector_DT,cellfun(@mean,interdiv_binnedByDT),cellfun(@std,interdiv_binnedByDT),'Color',color)
+        hold on
+        xlabel('time at division (h)')
+        ylabel('interdivision time (min)')
+        title('stabilization of tau')
+        axis([0 9.1 0 90])
         
         clear timestamps_birth timestamps_division currentTimes cycleData_cond
        
