@@ -19,8 +19,8 @@
 
 
 
-%  Last edit: jen, 2019 Mar 20
-%  Commit: first commit, compiled 60 min data with grouped plotting
+%  Last edit: jen, 2019 Mar 26
+%  Commit: small edits for comment clarity
 
 
 %  OK let's go!
@@ -89,7 +89,8 @@ classRules = [ 0,0,0,0,0; ... % 1  only low
 % 0. initialize array for concatenation
 traits_all = [];
 
-%%
+%% Part 1. collect and concatenate final cell cycle data from each experiment
+
 
 % 1. for all experiments in dataset
 for e = 1:length(exptArray)
@@ -323,111 +324,111 @@ for e = 1:length(exptArray)
     size(traits_all)
     
 end
-    %%
-    % some conditions do not have data after trimming
-    
-    % 19. bin traits by classification
-    classifications = traits_all(:,14);
-    
-    tau = traits_all(:,6) * 60;
-    Vd = traits_all(:,2);
-    ratio = Vd./traits_all(:,1);
-    mu = traits_all(:,7);
-    nScore = traits_all(:,9);
-    
-    binnedCounts = accumarray(classifications,tau,[],@length);
-    binnedTau_means = accumarray(classifications,tau,[],@mean);
-    binnedTau_stds = accumarray(classifications,tau,[],@std);
-    
-    binnedVd_means = accumarray(classifications,Vd,[],@mean);
-    binnedVd_stds = accumarray(classifications,Vd,[],@std);
-    
-    binnedRatio_means = accumarray(classifications,ratio,[],@mean);
-    binnedRatio_stds = accumarray(classifications,ratio,[],@std);
-    
-    binnedMu_means = accumarray(classifications,mu,[],@mean);
-    binnedMu_stds = accumarray(classifications,mu,[],@std);
-    
-    binnedNscore_means = accumarray(classifications,nScore,[],@mean);
-    binnedNscore_stds = accumarray(classifications,nScore,[],@std);
-    
-    %%
-    
-    figure(1)
-    bar(binnedTau_means,'FaceColor',color)
-    hold on
-    errorbar(binnedTau_means,binnedTau_stds,'.','Color',rgb('Black'))
-    title('tau by signal class')
-    
-    figure(2)
-    bar(binnedVd_means,'FaceColor',color)
-    hold on
-    errorbar(binnedVd_means,binnedVd_stds,'.','Color',rgb('Black'))
-    title('division vol by signal class')
-    
-    figure(3)
-    bar(binnedRatio_means,'FaceColor',color)
-    hold on
-    errorbar(binnedRatio_means,binnedRatio_stds,'.','Color',rgb('Black'))
-    title('ratio by signal class')
-    
-    figure(4)
-    bar(binnedMu_means,'FaceColor',color)
-    hold on
-    errorbar(binnedMu_means,binnedMu_stds,'.','Color',rgb('Black'))
-    title('mu by signal class')
-    
-    figure(5)
-    bar(binnedNscore_means,'FaceColor',color)
-    hold on
-    errorbar(binnedNscore_means,binnedNscore_stds,'.','Color',rgb('Black'))
-    title('nScore by signal class')
-    
-    figure(6)
-    bar(binnedCounts,'FaceColor',color)
-    title('counts by signal class')
-    
-    
-    % 19. save plots
-    cd('/Users/jen/Documents/StockerLab/Data_analysis/figures_ms2/')
-    
-    figure(1)
-    plotName = strcat('E-fig1-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    
-    figure(2)
-    plotName = strcat('E-fig2-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    
-    figure(3)
-    plotName = strcat('E-fig3-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    
-    figure(4)
-    plotName = strcat('E-fig4-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    
-    figure(5)
-    plotName = strcat('E-fig5-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    figure(6)
-    plotName = strcat('E-fig6-all-c-',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
-    
-    clear mu tau ratio Vb nScore
-    
-    %%
+
+%% Part 2. bin data by nutrient signal classification
+
+% 19. bin traits by classification
+classifications = traits_all(:,14);
+
+tau = traits_all(:,6) * 60;
+Vd = traits_all(:,2);
+ratio = Vd./traits_all(:,1);
+mu = traits_all(:,7);
+nScore = traits_all(:,9);
+
+binnedCounts = accumarray(classifications,tau,[],@length);
+binnedTau_means = accumarray(classifications,tau,[],@mean);
+binnedTau_stds = accumarray(classifications,tau,[],@std);
+
+binnedVd_means = accumarray(classifications,Vd,[],@mean);
+binnedVd_stds = accumarray(classifications,Vd,[],@std);
+
+binnedRatio_means = accumarray(classifications,ratio,[],@mean);
+binnedRatio_stds = accumarray(classifications,ratio,[],@std);
+
+binnedMu_means = accumarray(classifications,mu,[],@mean);
+binnedMu_stds = accumarray(classifications,mu,[],@std);
+
+binnedNscore_means = accumarray(classifications,nScore,[],@mean);
+binnedNscore_stds = accumarray(classifications,nScore,[],@std);
+
+%% Part 3. plot bars for each individual trait by signal classification
+
+figure(1)
+bar(binnedTau_means,'FaceColor',color)
+hold on
+errorbar(binnedTau_means,binnedTau_stds,'.','Color',rgb('Black'))
+title('tau by signal class')
+
+figure(2)
+bar(binnedVd_means,'FaceColor',color)
+hold on
+errorbar(binnedVd_means,binnedVd_stds,'.','Color',rgb('Black'))
+title('division vol by signal class')
+
+figure(3)
+bar(binnedRatio_means,'FaceColor',color)
+hold on
+errorbar(binnedRatio_means,binnedRatio_stds,'.','Color',rgb('Black'))
+title('ratio by signal class')
+
+figure(4)
+bar(binnedMu_means,'FaceColor',color)
+hold on
+errorbar(binnedMu_means,binnedMu_stds,'.','Color',rgb('Black'))
+title('mu by signal class')
+
+figure(5)
+bar(binnedNscore_means,'FaceColor',color)
+hold on
+errorbar(binnedNscore_means,binnedNscore_stds,'.','Color',rgb('Black'))
+title('nScore by signal class')
+
+figure(6)
+bar(binnedCounts,'FaceColor',color)
+title('counts by signal class')
+
+
+% 19. save plots
+cd('/Users/jen/Documents/StockerLab/Data_analysis/figures_ms2/')
+
+figure(1)
+plotName = strcat('E-fig1-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+
+figure(2)
+plotName = strcat('E-fig2-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+
+figure(3)
+plotName = strcat('E-fig3-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+
+figure(4)
+plotName = strcat('E-fig4-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+
+figure(5)
+plotName = strcat('E-fig5-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+figure(6)
+plotName = strcat('E-fig6-all-c-',num2str(condition));
+saveas(gcf,plotName,'epsc')
+close(gcf)
+
+clear mu tau ratio Vb nScore
+
+%% Part 4. plot ginormo bar plot grouping classes by signal TYPE
     
 xClass = [1, 2,10, 3,9,11,17, 4,8,12,15, 5,7, 6];
 xSpacing = [1, 3.8,4.8 7.6,8.6,9.6,10.6, 13.4,14.4,15.4,16.4, 19.2,20.2, 23];
