@@ -17,12 +17,13 @@
 %       c) V_div/V_birth ratio
 %       d) mean growth rate of cell cycle
 %       e) nutrient score
+%       f) added size
 
 
 
 
-%  Last edit: jen, 2019 Mar 26
-%  Commit: first commit, compiled 60 min data with grouped plotting
+%  Last edit: jen, 2019 Mar 31
+%  Commit: add added mass to traits of interest
 
 
 %  OK let's go!
@@ -397,6 +398,7 @@ for t = 1:4
     ratio = Vd./typeTraits(:,1);
     mu = typeTraits(:,7);
     nScore = typeTraits(:,9);
+    added = typeTraits(:,3);
     
     
     % 3. bin traits by nScore for mean
@@ -409,6 +411,7 @@ for t = 1:4
     binnedVd = accumarray(bins,Vd,[],@mean);
     binnedRatio = accumarray(bins,ratio,[],@mean);
     binnedMu = accumarray(bins,mu,[],@mean);
+    binnedAdded = accumarray(bins,added,[],@mean);
 
     
     
@@ -454,6 +457,17 @@ for t = 1:4
     xlabel('nScore')
     title(strcat('H-type-',num2str(t),'-mu'))
     plotName = strcat('H-type-',num2str(t),'-mu');
+    saveas(gcf,plotName,'epsc')
+    close(gcf)
+    
+    figure(5)
+    scatter(nScore,added)
+    hold on
+    plot(binnedX,binnedAdded)
+    ylabel('added volume')
+    xlabel('nScore')
+    title(strcat('H-type-',num2str(t),'-added'))
+    plotName = strcat('H-type-',num2str(t),'-added');
     saveas(gcf,plotName,'epsc')
     close(gcf)
     
