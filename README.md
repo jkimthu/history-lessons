@@ -66,3 +66,16 @@ G. size vs time (at birth, at division, added)
 	4. added size vs time at division
 
 
+
+H. traits plotted over a continuous nScore axis, though segregated by nutrient signal type
+	- type 1 = high to low
+	- type 2 = low to high
+	- type 3 = high low high
+	- type 4 = low high low
+
+	This script takes all 60 min experiments and pools data to plot a scatter of each cell cycle's trait value over its nutrient score. Traits include: division size, interdivision time, ratio of division size and birth size, added size, and mean growth rate.
+
+
+
+I. comparing trait values between steady-state low and 0% nutrient, steady-state ave and 50%, and steady-state high and 100% nutrient. 
+
