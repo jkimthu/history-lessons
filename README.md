@@ -38,7 +38,21 @@ C2. Traits binned by nutrient phase at birth
 
 
 
-D. Bootstrap hypothesis testing of test statistics between a single lineage and random subsamples from the whole population
+
+
+D. Bootstrap hypothesis testing of test statistics between a single lineage and random subsamples from the whole population.
+	- performed for 2, 4, and 5-cell cycle lineages
+	- for each lineage found in dataset, control for possible entrainment from nutrient signal by pulling out random subsamples with the same spread of nutrient signal classifications as the lineage set.
+
+D2. Autocorrelation analysis of trait parameters.
+	- both D analyses look for history effects between generations
+	- which is more prominent? nutrient experience of the cell cycle? or co-variance within a lineage?
+	- calculates two stats:
+	-    R1 : correlation coefficient for daughter vs mom
+	-    R2 : correlation coefficient for grand-daugther vs grandma
+
+
+
 
 
 E & F. assess traits by nutrient signal classifications
