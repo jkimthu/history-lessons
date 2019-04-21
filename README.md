@@ -33,10 +33,10 @@ C1. Traits associated with being above or below average in interdivision size
 	-- overall: this represents a regulation at the single cell level
 
 
+
 C2. Traits binned by nutrient phase at birth
 	- nutrient phase defines the start of the low as the first bin (bin 1) and the start of the high being the the start of the second half of bins (if 24 bins total, high phase starts at bin 13) 
-
-
+	- quite difficult to look at, due to lack of data throughout the period
 
 
 
@@ -91,5 +91,19 @@ H. traits plotted over a continuous nScore axis, though segregated by nutrient s
 
 
 
-I. comparing trait values between steady-state low and 0% nutrient, steady-state ave and 50%, and steady-state high and 100% nutrient. 
+I. comparing trait values between steady-state low and 0% nutrient, steady-state ave and 50%, and steady-state high and 100% nutrient.
+	- Mann-Whitney U test does not find any significance between bars of comparable nutrient experience. (lowest is p = 0.08q) 
 
+
+
+J. 
+
+
+K. Taheri-like added volume vs birth size plots
+   modified from figure28.m, which is about 1 year old at this point
+   add number of cell cycles per bin to plot (overlaid histogram)
+
+
+
+L. Mean added volume vs mean birth volume, at population level
+   Also plots mean added volume vs mean interdivision time
