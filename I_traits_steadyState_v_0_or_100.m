@@ -24,8 +24,8 @@
 
 
 
-%  Last edit: jen, 2019 Apr 1
-%  Commit: first commit, compare steady-state with singular nutrient phase
+%  Last edit: jen, 2019 Apr 15
+%  Commit: add mann-whitney u test between comparable bars
 
 
 %  OK let's go!
@@ -583,6 +583,7 @@ for condition = 2:4
     
 
     % 18. store mean, st dev and counts of all cell cycles in condition
+    traits_steady{condition}.values = traits_cond;
     traits_steady{condition}.means = mean(traits_cond);
     traits_steady{condition}.stds = std(traits_cond);
     traits_steady{condition}.count = length(traits_cond);
@@ -719,7 +720,47 @@ close(gcf)
 save('I-60min-data.mat','traits_steady','traits_zero','traits_50','traits_100')
 
 
+%% Part 5. mann-whitney u test between bars of equal nutrient
 
+clear
+clc
+cd('/Users/jen/Documents/StockerLab/Data_analysis/figures_ms2/')
+load('I-60min-data.mat')
+
+% loop through each trait (interdivision time, division volume, added volume)
+trait_column = [6; 2; 3];
+
+for tr = 1:length(trait_column)
+    
+    trait = trait_column(tr);
+    
+    % low
+    low_steady = traits_steady{1,2}.values(:,trait); % steady-state low
+    low_fluc = mean(traits_zero(:,trait));        % only low signal (fluc)
+    [pL,hL] = ranksum(low_steady,low_fluc);
+    [h_low,p_low] = ttest(low_steady,low_fluc);
+    
+    % ave
+    ave_steady = traits_steady{1,3}.values(:,trait); % steady-state average
+    ave_fluc = mean(traits_50(:,6));              % 50% low signal (fluc)
+    [pA,hA] = ranksum(ave_steady,ave_fluc);
+    [h_ave,p_ave] = ttest(ave_steady,ave_fluc);
+    
+    % high
+    high_steady = traits_steady{1,4}.values(:,trait); % steady-state high
+    high_fluc = mean(traits_100(:,trait));         % only high signal (fluc)
+    [pH,hH] = ranksum(high_steady,high_fluc);
+    [h_high,p_high] = ttest(high_steady,high_fluc);
+    
+    p_mann_whit(1,tr) = pL;
+    p_mann_whit(2,tr) = pA;
+    p_mann_whit(3,tr) = pH;
+    
+    p_studentsT(1,tr) = p_low;
+    p_studentsT(2,tr) = p_ave;
+    p_studentsT(3,tr) = p_high;
+
+end
 
 
 
