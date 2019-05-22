@@ -763,5 +763,54 @@ for tr = 1:length(trait_column)
 end
 
 
+%% Part 6. plotting each nutrient group data over time
+
+% goal: checking for stabilization
+%       plot each trait for each over birth or div time
+
+clear
+clc
+cd('/Users/jen/Documents/StockerLab/Data_analysis/figures_ms2/')
+load('I-60min-data.mat')
+
+%%
+% loop through each trait (interdivision time, division volume, added volume)
+trait_column = [6; 2; 3];
+
+for tr = 1:length(trait_column)
+    
+    trait = trait_column(tr);
+    
+    % trait values
+    low_trait = traits_zero(:,trait);
+    ave_trait = traits_50(:,trait);
+    high_trait = traits_100(:,trait);
+    
+    % times at birth
+    low_births = traits_zero(:,4);
+    ave_births = traits_50(:,4);
+    high_births = traits_100(:,4);
+    
+    % times at birth
+    low_divs = traits_zero(:,5);
+    ave_divs = traits_50(:,5);
+    high_divs = traits_100(:,5);
+    
+    figure(tr)
+    scatter(low_births,low_trait,15,rgb('Indigo'),'filled')
+    hold on
+    scatter(ave_births,ave_trait,15,rgb('DarkGoldenRod'),'filled')
+    hold on
+    scatter(high_births,high_trait,15,rgb('DarkRed'),'filled')
+    
+    figure(tr+10)
+    scatter(low_divs,low_trait,15,rgb('Indigo'),'filled')
+    hold on
+    scatter(ave_divs,ave_trait,15,rgb('DarkGoldenRod'),'filled')
+    hold on
+    scatter(high_divs,high_trait,15,rgb('DarkRed'),'filled')
+    
+
+end
 
 
