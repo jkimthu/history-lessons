@@ -12,6 +12,11 @@ A2. Mean birth size vs. mean growth rate
    - note: currently interdiv time is cleaned by removing outliers beyond 3 std
    - note: growth rate is not cleaned up in a similar way, however
 
+A3. Birth size vs growth rate
+    Population-level and single-cell level
+    Looks to mirror Figure 1C from Taheri-Araghi et al., Current Biology 2014
+    In this script, only growth rates corresponding to cell cycles in analysis are considered.
+
 
 B1. Mean division size vs mean birth size, population level
 
@@ -107,3 +112,6 @@ K. Taheri-like added volume vs birth size plots
 
 L. Mean added volume vs mean birth volume, at population level
    Also plots mean added volume vs mean interdivision time
+
+
+M. 
