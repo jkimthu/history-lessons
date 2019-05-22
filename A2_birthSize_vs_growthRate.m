@@ -10,21 +10,26 @@
 %       1. create array of experiments to use in analysis, then loop through each
 %               2. initialize experiment meta data
 %               3. load measured experiment data    
-%               4. initialize colors for plotting, then loop through conditions
-%                       5. isolate condition specific data
-%                       6. isolate volume (Va), timestamp, drop, curve, and trackNum data
-%                       7. calculate growth rate
-%                       8. trim condition and growth rate data to include only full cell cycles
-%                       9. isolate isDrop, timestamp, and timeSinceBirth data
+%               4. compile experiment data matrix
+%               5. initialize colors for plotting, then loop through conditions
+%                       6. isolate condition specific data
+%                       7. isolate volume (Va), timestamp, drop, curve, and trackNum data
+%                       8. calculate growth rate
+%                       9. trim condition and growth rate data to include only full cell cycles
+%                      10. isolate isDrop, timestamp, and timeSinceBirth data
+%                      11. extract only final timeSinceBirth from each growth curve, this is the inter-division time!
+%                      12. remove zeros, which occur if no full track data exists at a drop
+%                      13. truncate data to non-erroneous (e.g. bubbles) timestamps
+%                      14. truncate data to stabilized regions
+%                      15. trim outliers (those 3 std dev away from median) from final dataset
+%                      16. calculate final populuation mean and count
+%                      17. plot mean birth size vs mean growth rate
 
-
-%       2. inter-division time and mean log2 growth rate of each cycle
-%       3. plot population-averaged interdiv time vs mean log2 growth rate
 
 
 
 %  Last edit: jen, 2019 May 22
-%  Commit: tidying while working on A3
+%  Commit: minor tidying while working on A3
 
 
 %  OK let's go!
@@ -104,7 +109,7 @@ for e = 1:length(exptArray)
         
         
         
-        % 6. isolate volume (Va), timestamp, drop, curve, and trackNum data
+        % 7. isolate volume (Va), timestamp, drop, curve, and trackNum data
         volumes = getGrowthParameter(conditionData,'volume');            % calculated va_vals (cubic um)
         timestamps_sec = getGrowthParameter(conditionData,'timestamp');  % timestamp in seconds
         isDrop = getGrowthParameter(conditionData,'isDrop');             % isDrop, 1 marks a birth event
@@ -114,14 +119,14 @@ for e = 1:length(exptArray)
         
         
         
-        % 7. calculate growth rate
+        % 8. calculate growth rate
         growthRates_all = calculateGrowthRate(volumes,timestamps_sec,isDrop,curveFinder,trackNum);
         growthRates = growthRates_all(:,specificColumn);
         clear volumes timestamps_sec isDrop curveFinder trackNum
         
         
         
-        % 8. trim condition and growth rate data to include only full cell cycles
+        % 9. trim condition and growth rate data to include only full cell cycles
         curveIDs = conditionData(:,5);           % col 5 = curve ID
         conditionData_fullOnly = conditionData(curveIDs > 0,:);
         growthRates_fullOnly = growthRates(curveIDs > 0,:);
@@ -129,7 +134,7 @@ for e = 1:length(exptArray)
         
         
         
-        % 9. isolate isDrop, timestamp, and timeSinceBirth data
+        % 10. isolate isDrop, timestamp, and timeSinceBirth data
         timestamps_hr = conditionData_fullOnly(:,2)./3600;    % col 2  = timestamp in seconds converted to hours
         timestamps_hr2 = conditionData_fullOnly(:,2)./3600;   % same as above, but for growth rate trimming
         
@@ -138,25 +143,20 @@ for e = 1:length(exptArray)
         
         
         
-        % 10. extract only final timeSinceBirth from each growth curve,
-        %     this is the inter-division time!
+        % 11. extract only final timeSinceBirth from each growth curve, this is the inter-division time!
         final_birthSize = volumes(isDrop==1);
-        %birthIndeces = find(isDrop==1);
-        %finalDivTimes = volumes(birthIndeces(2:end)-1); % final timeSince birth is indexed right before every drop event
-               % ^ minutes between recorded birth and division
-               
         finalTimestamps = timestamps_hr(isDrop==1); % experiment timestamp (hours) of each division event.
         
         
         
-        % 11. remove zeros, which occur if no full track data exists at a drop
+        % 12. remove zeros, which occur if no full track data exists at a drop
         Vbirth = final_birthSize(final_birthSize>0);
         birthTimestamps = finalTimestamps(final_birthSize>0);
         clear final_birthSize finalTimestamps timeSinceBirth_min
         
         
         
-        % 12. truncate data to non-erroneous (e.g. bubbles) timestamps
+        % 13. truncate data to non-erroneous (e.g. bubbles) timestamps
         maxTime = bubbletime(condition);
         
         if maxTime > 0
@@ -177,28 +177,28 @@ for e = 1:length(exptArray)
         
         
         
-        % 13. truncate data to stabilized regions
+        % 14. truncate data to stabilized regions
         minTime = 3;
-        birthTimes_fullyTrimmed = Vbirth_bubbleTrimmed(birthTimestamps_bubbleTrimmed >= minTime,:);
+        birthSize_fullyTrimmed = Vbirth_bubbleTrimmed(birthTimestamps_bubbleTrimmed >= minTime,:);
         growthRates_fullyTrimmed = growthRates_bubbleTrimmed(grTimestamps_bubbleTrimmed >= minTime,:);
         clear growthRates_bubbleTrimmed divTimes_bubbleTrimmed divTimestamps_bubbleTrimmed grTimestamps_bubbleTrimmed
         
         
         
-        % if no div data in steady-state, skip condition
-        if isempty(birthTimes_fullyTrimmed) == 1
+        % 15. if no div data in steady-state, skip condition
+        if isempty(birthSize_fullyTrimmed) == 1
             continue
         else
             
-            % 14. trim outliers (those 3 std dev away from median) from final dataset
-            birthSize_median = median(birthTimes_fullyTrimmed);
-            birthSize_std_temp = std(birthTimes_fullyTrimmed);
-            birthSize_temp = birthTimes_fullyTrimmed(birthTimes_fullyTrimmed <= (birthSize_median+birthSize_std_temp*3)); % cut smallest vals, over 3 std out
+            % 15. trim outliers (those 3 std dev away from median) from final dataset
+            birthSize_median = median(birthSize_fullyTrimmed);
+            birthSize_std_temp = std(birthSize_fullyTrimmed);
+            birthSize_temp = birthSize_fullyTrimmed(birthSize_fullyTrimmed <= (birthSize_median+birthSize_std_temp*3)); % cut smallest vals, over 3 std out
             birthSize_final = birthSize_temp(birthSize_temp >= (birthSize_median-birthSize_std_temp*3));          % cut largest vals, over 3 std out
             clear birthSize_median birthSize_std_temp birthSize_temp
             
             
-            % 15. calculate final populuation mean and count
+            % 16. calculate final populuation mean and count
             Vbirth_mean{e} = mean(birthSize_final);
             Vbirth_std{e} = std(birthSize_final);
             Vbirth_count{e} = length(birthSize_final);
@@ -210,7 +210,7 @@ for e = 1:length(exptArray)
         end
         
         
-        % 16. plot mean interdivT vs mean growth rate
+        % 17. plot mean birth size vs mean growth rate
         color = rgb(palette(condition));
         
         if condition == 1 && timescale == 300
