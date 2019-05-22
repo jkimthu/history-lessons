@@ -23,8 +23,8 @@
 
 
 
-%  Last edit: jen, 2019 February 2
-%  Commit: first commit, adapted from figure A from history-lessons
+%  Last edit: jen, 2019 May 22
+%  Commit: tidying while working on A3
 
 
 %  OK let's go!
@@ -79,23 +79,19 @@ for e = 1:length(exptArray)
     % 3. load measured experiment data    
     experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
     cd(experimentFolder)
-    if strcmp(date,'2017-11-12') == 1
-        filename = strcat('lb-fluc-',date,'-width1p4-jiggle-0p5.mat');
-    elseif strcmp(expType,'origFluc') == 1
-        filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
-    end
+    filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
     load(filename,'D5','T');
     
     
     
-    % 3. compile experiment data matrix
+    % 4. compile experiment data matrix
     xy_start = min(min(storedMetaData{index}.xys));
     xy_end = max(max(storedMetaData{index}.xys));
     exptData = buildDM(D5, T, xy_start, xy_end,index,expType);
     clear D5 T xy_start xy_end expType date
     
     
-    % 4. initialize colors for plotting, then loop through conditions
+    % 5. initialize colors for plotting, then loop through conditions
     palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
     shapes = {'o','x','square','*'};
     
@@ -103,17 +99,18 @@ for e = 1:length(exptArray)
     for condition = 1:length(bubbletime)
         
         
-        % 5. isolate condition specific data
+        % 6. isolate condition specific data
         conditionData = exptData(exptData(:,21) == condition,:);  % col 21 = cond vals
         
         
         
         % 6. isolate volume (Va), timestamp, drop, curve, and trackNum data
-        volumes = conditionData(:,11);        % col 11 = calculated va_vals (cubic um)
-        timestamps_sec = conditionData(:,2);  % col 2  = timestamp in seconds
-        isDrop = conditionData(:,4);          % col 4  = isDrop, 1 marks a birth event
-        curveFinder = conditionData(:,5);     % col 5  = curve finder (ID of curve in condition)
-        trackNum = conditionData(:,20);       % col 20 = track number (not ID from particle tracking)
+        volumes = getGrowthParameter(conditionData,'volume');            % calculated va_vals (cubic um)
+        timestamps_sec = getGrowthParameter(conditionData,'timestamp');  % timestamp in seconds
+        isDrop = getGrowthParameter(conditionData,'isDrop');             % isDrop, 1 marks a birth event
+        curveFinder = getGrowthParameter(conditionData,'curveFinder');   % curve finder (ID of curve in condition)
+        trackNum = getGrowthParameter(conditionData,'trackNum');         % track number (not ID from particle tracking)
+        
         
         
         
