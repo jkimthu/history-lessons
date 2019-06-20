@@ -43,7 +43,7 @@
 
 
 %  Last edit: jen, 2019 June 20
-%  Commit: first finished commit, individual and population birth size vs growth rate
+%  Commit: add birth length to analysis, individual and population birth size vs growth rate
 
 
 %  OK let's go!
@@ -291,14 +291,13 @@ clc
 % 0. initialize complete meta data
 cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
-load('A3_data.mat')
+load('A3_data_2.mat')
 
 % 0. initialize plotting parameters
 palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
 environment_order = {'low',30,300,900,3600,'ave','high'};
 
 shape = 'o';
-% For filled circle 'MarkerFaceColor'
 
 
 % 1. accumulate data from each condition
@@ -307,7 +306,7 @@ low = 2;
 ave = 3; 
 high = 4;
 
-sigmas = 3;
+sigmas = 1;
 
 for ee = 1:length(environment_order)
     
@@ -320,6 +319,7 @@ for ee = 1:length(environment_order)
             
             mu_low = [];
             birthSize_low = [];
+            birthLength_low = [];
             
             % loop through all experiments and store low data
             for expt = 1:length(compiled_mu)
@@ -327,6 +327,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{low,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{low,1};
+                expt_length = compiled_birthLength{expt,1}{1,low};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -336,12 +337,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_low = [mu_low; expt_mu];
                 birthSize_low = [birthSize_low; expt_size];
-                clear expt_mu expt_size
+                birthLength_low = [birthLength_low; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_low;
                 condition_size = birthSize_low;
+                condition_length = birthLength_low;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -353,16 +356,19 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 size{1} = range_size;
                 mu{1} = range_mu;
+                bLength{1} = range_length;
                 
         elseif strcmp(condition,'ave') == 1
             
             mu_ave = [];
             birthSize_ave = [];
+            birthLength_ave = [];
             
             % loop through all experiments and store ave data
             for expt = 1:length(compiled_mu)
@@ -370,6 +376,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{ave,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{ave,1};
+                expt_length = compiled_birthLength{expt,1}{1,ave};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -379,12 +386,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_ave = [mu_ave; expt_mu];
                 birthSize_ave = [birthSize_ave; expt_size];
-                clear expt_mu expt_size
+                birthLength_ave = [birthLength_ave; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_ave;
                 condition_size = birthSize_ave;
+                condition_length = birthLength_ave;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -396,16 +405,19 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{6} = range_mu;
                 size{6} = range_size;
+                bLength{6} = range_length;
             
         elseif strcmp(condition,'high') == 1
             
             mu_high = [];
             birthSize_high = [];
+            birthLength_high = [];
             
             % loop through all experiments and store high data
             for expt = 1:length(compiled_mu)
@@ -413,6 +425,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{high,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{high,1};
+                expt_length = compiled_birthLength{expt,1}{1,high};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -422,12 +435,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_high = [mu_high; expt_mu];
                 birthSize_high = [birthSize_high; expt_size];
-                clear expt_mu expt_size
+                birthLength_high = [birthLength_high; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_high;
                 condition_size = birthSize_high;
+                condition_length = birthLength_high;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -439,11 +454,13 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{7} = range_mu;
                 size{7} = range_size;
+                bLength{7} = range_length;
             
         end
     else
@@ -454,6 +471,7 @@ for ee = 1:length(environment_order)
             
             mu_30 = [];
             birthSize_30 = [];
+            length_30 = [];
             
             % loop through experiments and store timescale data
             for arrayIndex = 1:length(idx)
@@ -463,6 +481,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{fluc,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{fluc,1};
+                expt_length = compiled_birthLength{expt,1}{1,fluc};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -472,12 +491,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_30 = [mu_30; expt_mu];
                 birthSize_30 = [birthSize_30; expt_size];
-                clear expt_mu expt_size
+                length_30 = [length_30; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_30;
                 condition_size = birthSize_30;
+                condition_length = length_30;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -489,11 +510,13 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{2} = range_mu;
                 size{2} = range_size;
+                bLength{2} = range_length;
             
             
         elseif condition == 300 
@@ -501,6 +524,7 @@ for ee = 1:length(environment_order)
             
             mu_300 = [];
             birthSize_300 = [];
+            length_300 = [];
             
             % loop through experiments and store timescale data
             for arrayIndex = 1:length(idx)
@@ -510,6 +534,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{fluc,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{fluc,1};
+                expt_length = compiled_birthLength{expt,1}{1,fluc};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -519,12 +544,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_300 = [mu_300; expt_mu];
                 birthSize_300 = [birthSize_300; expt_size];
-                clear expt_mu expt_size
+                length_300 = [length_300; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_300;
                 condition_size = birthSize_300;
+                condition_length = length_300;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -536,11 +563,13 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{3} = range_mu;
                 size{3} = range_size;
+                bLength{3} = range_length;
             
                 
         elseif condition == 900
@@ -548,6 +577,7 @@ for ee = 1:length(environment_order)
             
             mu_900 = [];
             birthSize_900 = [];
+            length_900 = [];
             
             % loop through experiments and store timescale data
             for arrayIndex = 1:length(idx)
@@ -557,6 +587,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{fluc,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{fluc,1};
+                expt_length = compiled_birthLength{expt,1}{1,fluc};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -566,12 +597,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_900 = [mu_900; expt_mu];
                 birthSize_900 = [birthSize_900; expt_size];
-                clear expt_mu expt_size
+                length_900 = [length_900; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
-            condition_mu = mu_900;
+                condition_mu = mu_900;
                 condition_size = birthSize_900;
+                condition_length = length_900;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -583,11 +616,13 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{4} = range_mu;
                 size{4} = range_size;
+                bLength{4} = range_length;
                 
             
         elseif condition == 3600
@@ -595,6 +630,7 @@ for ee = 1:length(environment_order)
             
             mu_3600 = [];
             birthSize_3600 = [];
+            length_3600 = [];
             
             % loop through experiments and store timescale data
             for arrayIndex = 1:length(idx)
@@ -604,6 +640,7 @@ for ee = 1:length(environment_order)
                 % isolate data 
                 expt_mu = compiled_mu{expt,1}{fluc,1}; % note: mu is all instananeous vals in each cell cycle
                 expt_size = compiled_birthSize{expt,1}{fluc,1};
+                expt_length = compiled_birthLength{expt,1}{1,fluc};
                 
                 % if data exists, calculate mean of each cell cycle
                 if ~isempty(expt_mu)
@@ -613,12 +650,14 @@ for ee = 1:length(environment_order)
                 % concanetate individual cell cycle values
                 mu_3600 = [mu_3600; expt_mu];
                 birthSize_3600 = [birthSize_3600; expt_size];
-                clear expt_mu expt_size
+                length_3600 = [length_3600; expt_length];
+                clear expt_mu expt_size expt_length
                 
             end
             
                 condition_mu = mu_3600;
                 condition_size = birthSize_3600;
+                condition_length = length_3600;
                 
                 % isolate cycles within 3 st dev of mean
                 condition_mean = nanmean(condition_mu);
@@ -630,16 +669,20 @@ for ee = 1:length(environment_order)
                 
                 range_mu = condition_mu(combined == 2);
                 range_size = condition_size(combined == 2);
+                range_length = condition_length(combined == 2);
                 clear condition_mean condition_std lower upper
                 
                 % store condition data
                 mu{5} = range_mu;
                 size{5} = range_size;
+                bLength{5} = range_length;
             
         end  
     end
 end
 clear fluc low ave high idx condition ee expt arrayIndex
+clear condition_mu condition_size condition_length
+clear range_mu range_size range_length
 
 
 
@@ -650,8 +693,8 @@ clear fluc low ave high idx condition ee expt arrayIndex
 
 % assemable data based on environment order
 population_birthSize = cellfun(@mean,size); % population birth size of each condition
-population_mu = cellfun(@nanmean,mu); % population growth rate of each condition
-
+population_mu = cellfun(@nanmean,mu);       % population growth rate of each condition
+population_birthLength = cellfun(@mean,bLength); % population birth length of each condition
 
 % plot each population point
 figure(1)
@@ -659,6 +702,16 @@ for cc = 1:length(population_mu)
     
     color = rgb(palette(cc));
     plot(log(population_mu(cc)),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
+    hold on
+    
+end
+clear color cc
+
+figure(2)
+for cc = 1:length(population_mu)
+    
+    color = rgb(palette(cc));
+    plot(log(population_mu(cc)),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     hold on
     
 end
@@ -675,12 +728,16 @@ for condition = 1:length(environment_order)
     condition_color = rgb(palette(condition));
     condition_mu = mu{condition};
     condition_size = size{condition};
+    condition_length = bLength{condition};
     
     bins = floor((condition_mu + 10)* binFactor);
     binned_mu = accumarray(bins,condition_mu,[],@mean);
     indiv_mu = binned_mu(binned_mu > 0);
+    
     binned_size = accumarray(bins,condition_size,[],@mean);
     indiv_size = binned_size(binned_mu > 0);
+    binned_length = accumarray(bins,condition_length,[],@mean);
+    indiv_length = binned_length(binned_mu > 0);
     
     
     % 4. calculate mean birth size and growth rate for each bin (individual data)
@@ -689,15 +746,31 @@ for condition = 1:length(environment_order)
     hold on
     plot(log(indiv_mu),log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     
+    
+    figure(2)
+    hold on
+    plot(log(indiv_mu),log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
+    
 end
-legend('low','30','300','900','3600','ave','high')
+clear condition_color condition_mu condition_size condition_length
+clear bins binned_mu indiv_mu binned_size indiv_size binned_length indiv_length
+
 
 figure(1)
+legend('low','30','300','900','3600','ave','high')
 title('population vs individual growth laws')
 xlabel('mean mu')
-ylabel('mean birth size')
+ylabel('mean birth volume')
 ylim([0.5 2])
 xlim([-1 2])
+
+figure(2)
+legend('low','30','300','900','3600','ave','high')
+title('population vs individual growth laws')
+xlabel('mean mu')
+ylabel('mean birth length')
+ylim([0.5 1.75])
+xlim([-1 1.8])
 
 
 
