@@ -101,7 +101,8 @@ I. comparing trait values between steady-state low and 0% nutrient, steady-state
 
 
 
-J. 
+J. two-factor ANOVA
+   tests for interactions between nutrient level and nutrient timescale
 
 
 K. Taheri-like added volume vs birth size plots
