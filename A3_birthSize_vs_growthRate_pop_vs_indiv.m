@@ -42,8 +42,8 @@
 
 
 
-%  Last edit: jen, 2019 June 20
-%  Commit: add birth length to analysis, individual and population birth size vs growth rate
+%  Last edit: jen, 2019 June 30
+%  Commit: edit such that x axis is not plotted on log-scale, to mirror Taheri
 
 
 %  OK let's go!
@@ -306,7 +306,7 @@ low = 2;
 ave = 3; 
 high = 4;
 
-sigmas = 1;
+sigmas = 3;
 
 for ee = 1:length(environment_order)
     
@@ -701,7 +701,8 @@ figure(1)
 for cc = 1:length(population_mu)
     
     color = rgb(palette(cc));
-    plot(log(population_mu(cc)),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
+    %plot(log(population_mu(cc)),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
+    plot(population_mu(cc),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     hold on
     
 end
@@ -711,7 +712,8 @@ figure(2)
 for cc = 1:length(population_mu)
     
     color = rgb(palette(cc));
-    plot(log(population_mu(cc)),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
+    %plot(log(population_mu(cc)),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
+    plot(population_mu(cc),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     hold on
     
 end
@@ -744,12 +746,14 @@ for condition = 1:length(environment_order)
     % plot each bin as an open blue point and fit a line WITHIN each condition
     figure(1)
     hold on
-    plot(log(indiv_mu),log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
+    %plot(log(indiv_mu),log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
+    plot(indiv_mu,log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     
     
     figure(2)
     hold on
-    plot(log(indiv_mu),log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
+    %plot(log(indiv_mu),log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
+    plot(indiv_mu,log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     
 end
 clear condition_color condition_mu condition_size condition_length
@@ -762,7 +766,7 @@ title('population vs individual growth laws')
 xlabel('mean mu')
 ylabel('mean birth volume')
 ylim([0.5 2])
-xlim([-1 2])
+xlim([-0.1 7])
 
 figure(2)
 legend('low','30','300','900','3600','ave','high')
@@ -770,7 +774,7 @@ title('population vs individual growth laws')
 xlabel('mean mu')
 ylabel('mean birth length')
 ylim([0.5 1.75])
-xlim([-1 1.8])
+xlim([-0.1 7])
 
 
 
