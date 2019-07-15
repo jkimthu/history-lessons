@@ -3,8 +3,7 @@
 %  Goal: for a given experiment,
 %
 %        1.  calculate lambda*tau for all cell cycles after first 3h
-%        2.  bin cell cycles by lambda*tau
-%        3.  plot a scatter plot of trait values over lambda tau
+%        2.  plot a scatter plot of trait values over lambda tau
 
 
 %  Traits of interest: 
@@ -20,9 +19,7 @@
 
 
 %  Last edit: jen, 2019 July 15
-%  Commit: first commit, plot cell cycle traits over lambda*tau, coloring
-%          points by signal class
-
+%  Commit: edit to control color scheme, don't bin lambda*tau
 
 %  OK let's go!
 
@@ -198,9 +195,6 @@ for e = 1:length(exptArray)
         currentTrack = tracks_final(cc);
         currentCC = cellCyles_final(cc);
         
-%         if length(unique(currentNscore)) ~= 1
-%             error('Nscore in current cell cycle is not unique: error in calling cell cycle or score')
-%         end
         
         ccData(cc,1) = currentVolumes(1);       % V_birth
         ccData(cc,2) = currentVolumes(end);     % V_division
@@ -212,23 +206,7 @@ for e = 1:length(exptArray)
         ccData(cc,8) = nanstd(currentGrowthRates);  % standard deviation in growth rate
         ccData(cc,9) = currentNscore(1);               % nScore
         
-        
         ccSignal{cc,1} = currentBinarySignal;        % binary signal (1 = high, 0 = low)
-        
-        
-%         isSwitch = [0; diff(currentBinarySignal)] ~= 0;
-%         numShifts = sum(isSwitch);
-%         if numShifts > 0
-%             switches{cc,1} = find(isSwitch == 1);
-%             shiftStage = switches{cc}(1)/length(currentBinarySignal); % fraction into cell cycle of first switch
-%         else
-%             switches{cc,1} = NaN;
-%             shiftStage = NaN;
-%         end
-%         
-        
-%         ccData(cc,10) = numShifts;
-%         ccData(cc,11) = shiftStage; % first if multiple
         ccData(cc,12) = currentTrack;
         ccData(cc,13) = currentCC;
         
@@ -334,11 +312,7 @@ lambda = traits_all(:,7); % mean growth rate of cell cycle (1/h)
 G = lambda.*tau;
 
 
-% 2. bin traits by tenths of G
-G_bins = floor(G*10);
-
-
-% 3. identify cell cycles by course signal classifications
+% 2. identify cell cycles by course signal classifications
 classifications = traits_all(:,14);
 type = nan(length(classifications),1);
 
@@ -372,7 +346,7 @@ type = nan(length(classifications),1);
 
     
     
-% 2. confirm all shifting signals are accounted for
+% 3. confirm all shifting signals are accounted for
 noShifts = find(isnan(type));
 
 if isempty(noShifts) == 0
@@ -404,7 +378,7 @@ for t = 1:6
     
     % 1. isolate traits from type of interest
     typeTraits = traits_all(type == t,:);
-    type_bins = G_bins(type == t);
+    type_Gs = G(type == t);
     
     
     % 2. isolate specific traits of interest
@@ -415,36 +389,30 @@ for t = 1:6
     added = typeTraits(:,3);
     
     
-    % 3. bin traits by G and average values in each bin
-    binnedTau = accumarray(type_bins,tau,[],@mean);
-    binnedVd = accumarray(type_bins,Vd,[],@mean);
-    binnedRatio = accumarray(type_bins,ratio,[],@mean);
-    binnedMu = accumarray(type_bins,mu,[],@mean);
-    binnedAdded = accumarray(type_bins,added,[],@mean);
-
     
-    
-    % 4. plot scatter with means binned by lambda*tau!
+    % 3. plot scatter with means binned by lambda*tau!
+    color = rgb(palette(t));
+    sz = 7;
     
     figure(1)
     hold on
-    scatter(type_bins,tau)
+    scatter(type_Gs,tau,sz,color)
 
     figure(2)
     hold on
-    scatter(type_bins,Vd)
+    scatter(type_Gs,Vd,sz,color)
     
     figure(3)
     hold on
-    scatter(type_bins,ratio)
+    scatter(type_Gs,ratio,sz,color)
   
     figure(4)
     hold on
-    scatter(type_bins,mu)
+    scatter(type_Gs,mu,sz,color)
 
     figure(5)
     hold on
-    scatter(type_bins,added)
+    scatter(type_Gs,added,sz,color)
     
 end
 
@@ -458,7 +426,8 @@ for ff = 1:5
     figure(1)
     ylabel('interdivision time')
     xlabel('lambda*tau')
-    title(strcat('H-type-',num2str(t),'-tau'))
+    xlim([0 1.8])
+    title(strcat('H2-lambdaTau-tau'))
     plotName = strcat('H2-lambdaTau-tau');
     saveas(gcf,plotName,'epsc')
     %close(gcf)
@@ -467,7 +436,8 @@ for ff = 1:5
     figure(2)
     ylabel('division volume')
     xlabel('lambda*tau')
-    title(strcat('H2-type-',num2str(t),'-Vdiv'))
+    xlim([0 1.8])
+    title(strcat('H2-lambdaTau-Vdiv'))
     plotName = strcat('H2-lambdaTau-Vdiv');
     saveas(gcf,plotName,'epsc')
     %close(gcf)
@@ -475,7 +445,8 @@ for ff = 1:5
     figure(3)
     ylabel('ratio')
     xlabel('lambda*tau')
-    title(strcat('H-type-',num2str(t),'-ratio'))
+    xlim([0 1.8])
+    title(strcat('H2-lambdaTau-ratio'))
     plotName = strcat('H2-lambdaTau-ratio');
     saveas(gcf,plotName,'epsc')
     %close(gcf)
@@ -483,7 +454,8 @@ for ff = 1:5
     figure (4)
     ylabel('mean growth rate (lambda)')
     xlabel('lambda*tau')
-    title(strcat('H-type-',num2str(t),'-mu'))
+    xlim([0 1.8])
+    title(strcat('H2-lambdaTau-mu'))
     plotName = strcat('H2-lambdaTau-mu');
     saveas(gcf,plotName,'epsc')
     %close(gcf)
@@ -491,7 +463,8 @@ for ff = 1:5
     figure(5)
     ylabel('added volume')
     xlabel('lambda*tau')
-    title(strcat('H-type-',num2str(t),'-added'))
+    xlim([0 1.8])
+    title(strcat('H2-lambdaTau-added'))
     plotName = strcat('H2-lambdaTau-added');
     saveas(gcf,plotName,'epsc')
     %close(gcf)
