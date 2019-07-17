@@ -26,6 +26,9 @@ B2. Division size vs. birth size, single-cell (heated scatter plot)
 	- for prior to steady-state, trimming by birth time gives 2x
 	- for prior to steady-state, trimming by division time (< 2.5h) gives....
 
+B3. Heated scatter plot, interdivision time vs mean growth rate per cell cycle
+
+
 
 C1. Traits associated with being above or below average in interdivision size
 	- isolates two populations from each condition: (1) one std larger than average division size and (2) one std smaller than average division size
