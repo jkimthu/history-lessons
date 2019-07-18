@@ -23,7 +23,7 @@
 
 
 %  Last edit: jen, 2019 July 18
-%  Commit: edit to plot best fit line over steady points and calculate CV
+%  Commit: edit to plot distributions of birth volume, birth length and lambda
 
 
 %  OK let's go!
@@ -904,4 +904,54 @@ ylabel('coefficient of variation')
 name = {'birth volume';'birth length';'growth rate'};
 set(gca,'xticklabel',name)
 legend({'low','30 s','5 min','15 min','60 min','ave','high'})
+title(sigs)
+
+
+%% 6. distributions of volume, length and growth rate
+
+clear
+clc
+
+% 0. initialize complete meta data
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
+environment_order = {'low',30,300,900,3600,'ave','high'};
+
+
+% 0. determine number of sigmas in dataset
+%sigs = '3sigmas';
+sigs = '1sigma';
+
+
+% 0. load dataset
+load(strcat('A3_data_',sigs,'.mat')) % as of 2019-07-18, saved data compiles cc within 3 sigmas
+
+
+% 1. plot histograms of all parameters
+figure(1)
+for e = 1:7
+    histogram(size{e},'FaceColor',rgb(palette{e}))
+    hold on
+end
+ylabel('Counts')
+xlabel('Birth Volume')
+title(sigs)
+
+figure(2)
+for e = 1:7
+    histogram(bLength{e},'FaceColor',rgb(palette{e}))
+    hold on
+end
+ylabel('Counts')
+xlabel('Birth length')
+title(sigs)
+
+figure(3)
+for e = 1:7
+    histogram(mu{e},'FaceColor',rgb(palette{e}))
+    hold on
+end
+ylabel('Counts')
+xlabel('Mean growth rate')
 title(sigs)
