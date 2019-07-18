@@ -15,35 +15,15 @@
 %  Strategy: 
 %
 %  Part 1. initialize analysis
-%
-%       0. initialize experiment data
-%       0. define method of calculating growth rate
-%       0. initialize colors for plotting
-%       0. create array of experiments to use in analysis
-%       0. initialize data vectors to store stats for each experiment
-%
 %  Part 2. collect single cell birth size and instantaneous growth rates
-%
-%       1.  loop through each experiment to collect data
-%               2. initialize experiment meta data
-%               3. load measured experiment data    
-%               4. compile experiment data matrix
-%               5. for each condition in experiment...
-%                       5. isolate condition specific data
-
-%                       6. isolate volume (Va), timestamp, drop, curve, and trackNum data
-%                       7. calculate growth rate
-%                       8. trim condition and growth rate data to include only full cell cycles
-%                       9. isolate isDrop, timestamp, and timeSinceBirth data
-
-
-%       2. inter-division time and mean log2 growth rate of each cycle
-%       3. plot population-averaged interdiv time vs mean log2 growth rate
+%  Part 3. plotting
+%  Part 4. fit best line
 
 
 
-%  Last edit: jen, 2019 June 30
-%  Commit: edit such that x axis is not plotted on log-scale, to mirror Taheri
+
+%  Last edit: jen, 2019 July 18
+%  Commit: edit to plot best fit line over steady points and calculate CV
 
 
 %  OK let's go!
@@ -76,6 +56,31 @@ compiled_mu = cell(length(exptArray),1);
 
 
 %% Part 2. collect single cell birth size and instantaneous growth rates
+
+
+%  Strategy:
+%
+%       1.  loop through each experiment to collect data
+%               2. initialize experiment meta data
+%               3. load measured experiment data    
+%               4. compile experiment data matrix
+%               5. for each condition in experiment...
+%                       5. isolate condition specific data
+%                       6. isolate volume (Va), timestamp, drop, curve, and trackNum data
+%                       7. calculate growth rate
+%                       8. trim condition and growth rate data to include only full cell cycles
+%                       9. isolate isDrop, timestamp, and timeSinceBirth data
+%                      10. extract only final timeSinceBirth from each growth curve, this is the inter-division time!
+%                      11. remove zeros, which occur if no full track data exists at a drop
+%                      12. truncate data to non-erroneous (e.g. bubbles) timestamps
+%                      13. truncate data to stabilized regions
+%                      14. if no div data in steady-state, skip condition
+%                          else, trim outliers (those 3 std dev away from median) from final dataset
+%                      15. bin growth rates by cell cycle, to match organization of birth size data
+%                      16. store condition data into one variable per experiment
+%               17. store experiment data into single variable for further analysis
+%      18. save hard earned data
+
 
 % 1. loop through each experiment to collect data
 for e = 1:length(exptArray)
@@ -306,7 +311,7 @@ low = 2;
 ave = 3; 
 high = 4;
 
-sigmas = 3;
+sigmas = 1;
 
 for ee = 1:length(environment_order)
     
@@ -691,17 +696,19 @@ clear range_mu range_size range_length
 %    plot each condition as a closed orange point and fit a line (the growth law ACROSS conditions)
 
 
-% assemable data based on environment order
+% assemble data based on environment order
 population_birthSize = cellfun(@mean,size); % population birth size of each condition
 population_mu = cellfun(@nanmean,mu);       % population growth rate of each condition
 population_birthLength = cellfun(@mean,bLength); % population birth length of each condition
+
+
+
 
 % plot each population point
 figure(1)
 for cc = 1:length(population_mu)
     
     color = rgb(palette(cc));
-    %plot(log(population_mu(cc)),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     plot(population_mu(cc),log(population_birthSize(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     hold on
     
@@ -712,7 +719,6 @@ figure(2)
 for cc = 1:length(population_mu)
     
     color = rgb(palette(cc));
-    %plot(log(population_mu(cc)),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     plot(population_mu(cc),log(population_birthLength(cc)),'Color',color,'Marker',shape,'MarkerSize',10,'LineWidth',2)
     hold on
     
@@ -746,13 +752,11 @@ for condition = 1:length(environment_order)
     % plot each bin as an open blue point and fit a line WITHIN each condition
     figure(1)
     hold on
-    %plot(log(indiv_mu),log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     plot(indiv_mu,log(indiv_size),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     
     
     figure(2)
     hold on
-    %plot(log(indiv_mu),log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     plot(indiv_mu,log(indiv_length),'Color',condition_color,'Marker',shape,'MarkerSize',6,'LineWidth',1)
     
 end
@@ -777,5 +781,127 @@ ylim([0.5 1.75])
 xlim([-0.1 7])
 
 
+% save hard earned data!
+save('A3_data_1sigma.mat','compiled_birthSize','compiled_birthLength','compiled_mu','exptArray','population_birthSize','population_mu','population_birthLength','size','mu','bLength')
 
 
+
+%% Part 4. fitting 
+
+clear
+clc
+
+% 0. initialize complete meta data
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+load('A3_data_2.mat') % as of 2019-07-18, saved data compiles cc within 3 sigmas
+
+palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
+environment_order = {'low',30,300,900,3600,'ave','high'};
+
+
+
+
+% 1. determine which data points are steady = 1 or fluctuating = 0
+for eo = 1:length(environment_order)
+    isSteady(eo) = ischar(environment_order{eo});
+end
+clear eo
+
+
+% 2. isolate steady data
+steady_mu = population_mu(isSteady == 1);
+steady_birthLength = population_birthLength(isSteady == 1);
+steady_birthVolume = population_birthSize(isSteady == 1);
+
+
+% 3. best fit line
+fit_length = polyfit(steady_mu,log(steady_birthLength),1);
+fit_vol = polyfit(steady_mu,log(steady_birthVolume),1);
+
+% 4. plot data
+figure(1)
+for cc = 1:length(population_mu)
+    
+    color = rgb(palette(cc));
+    plot(population_mu(cc),log(population_birthSize(cc)),'Color',color,'Marker','o','MarkerSize',10,'LineWidth',2)
+    hold on
+    
+end
+
+figure(2)
+for cc = 1:length(population_mu)
+    
+    color = rgb(palette(cc));
+    plot(population_mu(cc),log(population_birthLength(cc)),'Color',color,'Marker','o','MarkerSize',10,'LineWidth',2)
+    hold on
+    
+end
+clear color cc
+
+
+% 5. plot best fit line
+x = linspace(steady_mu(1),steady_mu(end),10);
+yv = fit_vol(1)*x + fit_vol(2);
+yl = fit_length(1)*x + fit_length(2);
+
+figure(1)
+hold on
+plot(x,yv,'Color',rgb('SlateGray'))
+axis([0.5 3.5 0.6 1.8])
+xlabel('mean mu')
+ylabel('ln(mean birth volume)')
+legend('low','30','300','900','3600','ave','high')
+text(2, 1.65, strcat('y=',num2str(fit_vol(1)),'x+',num2str(fit_vol(2))))
+
+figure(2)
+hold on
+plot(x,yl,'Color',rgb('SlateGray'))
+axis([0.5 3.5 0.6 1.6])
+xlabel('mean mu')
+ylabel('ln(mean birth length)')
+legend('low','30','300','900','3600','ave','high')
+text(2, 1.35, strcat('y=',num2str(fit_length(1)),'x+',num2str(fit_length(2))))
+
+
+
+%% 5. coefficient of variation analysis
+
+clear
+clc
+
+% 0. initialize complete meta data
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+
+
+% 0. determine number of sigmas in dataset
+%sigs = '3sigmas';
+sigs = '1sigma';
+
+
+% 0. load dataset
+load(strcat('A3_data_',sigs,'.mat')) % as of 2019-07-18, saved data compiles cc within 3 sigmas
+
+
+
+% 1. for 3 sigma dataset, calculate cv for each condition
+pop_std_size = cellfun(@std,size);
+pop_std_mu = cellfun(@nanstd,mu);
+pop_std_birthLength = cellfun(@std, bLength);
+
+
+% 2. calculate CV for each condition
+cv_volume_3sigma = pop_std_size./population_birthSize;
+cv_length_3sigma = pop_std_birthLength./population_birthLength;
+cv_lambda_3sigma = pop_std_mu./population_mu;
+
+
+% 3. plot CVs
+figure(1)
+bar([cv_volume_3sigma;cv_length_3sigma;cv_lambda_3sigma])
+ylabel('coefficient of variation')
+name = {'birth volume';'birth length';'growth rate'};
+set(gca,'xticklabel',name)
+legend({'low','30 s','5 min','15 min','60 min','ave','high'})
+title(sigs)
