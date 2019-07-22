@@ -25,9 +25,14 @@ B2. Division size vs. birth size, single-cell (heated scatter plot)
 	- trimmed for steady-state (post 3 hrs) based on birth time
 	- for prior to steady-state, trimming by birth time gives 2x
 	- for prior to steady-state, trimming by division time (< 2.5h) gives....
+	- plots each replicate from desired timescale
 
 B3. Heated scatter plot, interdivision time vs mean growth rate per cell cycle
-
+	- compiling all replicates
+B4. Heated scatter plot, birth size vs lambda
+	- compiling all replicates
+B5. Heated scatter, birth size vs lambda for individual replicates
+	- 5 min timescale when compiled has two peaks, whereas for individual replicates each has only one
 
 
 C1. Traits associated with being above or below average in interdivision size
