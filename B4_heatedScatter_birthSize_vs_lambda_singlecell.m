@@ -16,8 +16,7 @@
 
 
 %  Last edit: jen, 2019 July 17
-%  Commit: first commit, build on B3 but also store data
-
+%  Commit: edit to correct swapped vol for length data in heat map plotting
 
 
 %  OK let's go!
@@ -225,6 +224,7 @@ for ts = 1:length(ts_all)
         birthVol_final = birthVol_final(lambda_final > 0);
         birthLength_final = birthLength_final(lambda_final > 0);
         
+
         
         
         % 16. plot
@@ -262,6 +262,7 @@ for ts = 1:length(ts_all)
         max_mu = 5;
         
         bin_birthVol = ceil(birthVol_final/binSize_vol);
+        bin_birthLength = ceil(birthLength_final/binSize_length);
         bin_lambda = ceil(lambda_final/binSize_mu);
         
         
@@ -269,8 +270,8 @@ for ts = 1:length(ts_all)
         bin_matrix_length = zeros(max_size/binSize_length,max_mu/binSize_mu);
         
         linidx_vol = sub2ind(size(bin_matrix_vol),bin_birthVol,bin_lambda);
-        linidx_len = sub2ind(size(bin_matrix_length),bin_birthVol,bin_lambda);
-        
+        linidx_len = sub2ind(size(bin_matrix_length),bin_birthLength,bin_lambda);
+ 
         
         bins_unique_vol = unique(linidx_vol);
         out_v = [bins_unique_vol,histc(linidx_vol(:),bins_unique_vol)]; % outputs linear index in column 1, number of counts per index in column 2
