@@ -17,6 +17,11 @@ A3. Birth size vs growth rate
     Looks to mirror Figure 1C from Taheri-Araghi et al., Current Biology 2014
     In this script, only growth rates corresponding to cell cycles in analysis are considered.
 
+A5. Heated scatter plots of the bins plotted in A3;
+	Over the same points (birth volume/length vs mean growth rate), colormap indicates:
+		1. counts (number of cell cycles per bin)
+		2. mean nScore
+		3. frequency of nutrient signal 
 
 B1. Mean division size vs mean birth size, population level
 
