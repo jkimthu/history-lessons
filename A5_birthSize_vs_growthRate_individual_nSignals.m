@@ -16,8 +16,8 @@
 
 
 
-%  Last edit: jen, 2019 July 22
-%  Commit: first commit, throw nutrient signal into the mix
+%  Last edit: jen, 2019 July 23
+%  Commit: troubleshoot signal overlay - was assigning signals incorrectly
 
 
 %  OK let's go!
@@ -318,9 +318,13 @@ load('A5_data.mat')
 
 % 0. initialize plotting parameters
 %palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
-palette = {'Indigo','DodgerBlue','GoldenRod','FireBrick'};
+palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
 environment_order = {'low',30,300,900,3600,'ave','high'};
 shape = 'o';
+
+plot_length = 8;
+plot_vol = 10;
+plot_lambda = 4;
 
 
 % 0. initialize binning
@@ -334,7 +338,7 @@ max_lambda = 5;
 
 
 % 1. loop through experiments to format data and plot
-for ee = 9:length(exptArray)
+for ee = 11:length(exptArray)
     
     
     % 2. initialize experiment meta data
@@ -354,6 +358,9 @@ for ee = 9:length(exptArray)
         
         
         % 4. calculate lambda and nScores from compiled mus
+        if isempty(eeVols) == 1
+            continue
+        end
         eeLambdas = cellfun(@nanmean,eeMus);
         eeNscores = cellfun(@nanmean,eeSignals);
         clear eeMus
@@ -445,7 +452,7 @@ for ee = 9:length(exptArray)
         scatter(binned_lambdas_v,binned_vol,60,counts_v,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
         colormap(parula) % see colormap documentation
         colorbar;
-        axis([0 max_lambda 0 max_vol])
+        axis([0 plot_lambda 0 plot_vol])
         title(strcat(num2str(condition),'-',date))
         xlabel('mean growth rate (1/h)')
         ylabel('birth volume (cubic um)')
@@ -455,7 +462,7 @@ for ee = 9:length(exptArray)
         scatter(binned_lambdas_l,binned_length,60,counts_l,'filled')
         colormap(parula) % see colormap documentation
         colorbar;
-        axis([0 max_lambda 0 max_length])
+        axis([0 plot_lambda 0 plot_length])
         title(strcat(num2str(condition),'-',date))
         xlabel('mean growth rate (1/h)')
         ylabel('birth length (um)')
@@ -479,7 +486,7 @@ for ee = 9:length(exptArray)
         scatter(binned_lambdas_v,binned_vol,60,nScores_vol,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
         colormap(parula) % see colormap documentation
         colorbar;
-        axis([0 max_lambda 0 max_vol])
+        axis([0 plot_lambda 0 plot_vol])
         title(strcat(num2str(condition),'-',date,'-heated-nScore'))
         xlabel('mean growth rate (1/h)')
         ylabel('birth volume (cubic um)')
@@ -489,7 +496,7 @@ for ee = 9:length(exptArray)
         scatter(binned_lambdas_l,binned_length,60,nScores_len,'filled')
         colormap(parula) % see colormap documentation
         colorbar;
-        axis([0 max_lambda 0 max_length])
+        axis([0 plot_lambda 0 plot_length])
         title(strcat(num2str(condition),'-',date))
         xlabel('mean growth rate (1/h)')
         ylabel('birth length (um)')
@@ -499,7 +506,7 @@ for ee = 9:length(exptArray)
         
         % 11. plot scatter, heated by signal type
         %     i. determine types
-        if timescale == 3600
+        if timescale == 3600 && condition == 1
             
             signalType = zeros(length(nSignals),1);
             onlyH = 1;
@@ -508,13 +515,14 @@ for ee = 9:length(exptArray)
             L2H = 4;
             HLH = 5;
             LHL = 6;
+            HLHL =7;
+            LHLH = 8;
             
             for cc = 1:length(nSignals)
                 
                 currSignal = nSignals{cc};
                 ds_dt = diff(currSignal);
                 currShifts = length(find(ds_dt ~= 0));
-                currShift_types = ds_dt(ds_dt ~= 0);
                 
                 if currShifts == 0
                     if currSignal(1) == 1
@@ -534,9 +542,15 @@ for ee = 9:length(exptArray)
                     else
                         signalType(cc) = LHL;
                     end
+                elseif currShifts == 3
+                    if currSignal(1) == 1
+                        signalType(cc) = HLHL;
+                    else
+                        signalType(cc) = LHLH;
+                    end
                 end
             end
-            clear currSignal ds_dt currShifts currShift_types cc
+            clear currSignal ds_dt currShifts cc
             
             types_by_vbins = accumarray(linidx_vol,signalType,[],@(x) {x});
             types_by_lbins = accumarray(linidx_len,signalType,[],@(x) {x});
@@ -546,22 +560,24 @@ for ee = 9:length(exptArray)
             
            
             % count signals of interest per bin
-            sigArray = [H2L; L2H; onlyH; onlyL];
+            sigArray = [onlyH; onlyL; H2L; L2H; HLH; LHL; HLHL; LHLH];
+            sigNames = {'onlyH','onlyL','H2L','L2H','HLH','LHL','HLHL','LHLH'};
             signal_counts_v = zeros(length(types_vol),length(sigArray));
             signal_counts_l = zeros(length(types_len),length(sigArray));
             
             for sg = 1:length(sigArray)
                 
                 currSig = sigArray(sg);
+                currName = sigNames{sg};
                 
                 % binned by volume data
                 for ii = 1:length(types_vol)
                     currBin = types_vol{ii};
                     numSig = find(currBin == currSig);
                     if isempty(numSig) == 1
-                        signal_counts_v(ii,currSig) = 0;
+                        signal_counts_v(ii,sg) = 0;
                     else
-                        signal_counts_v(ii,currSig) = length(numSig);
+                        signal_counts_v(ii,sg) = length(numSig);
                     end
                 end
                 
@@ -570,133 +586,81 @@ for ee = 9:length(exptArray)
                     currBin = types_len{ii};
                     numSig = find(currBin == currSig);
                     if isempty(numSig) == 1
-                        signal_counts_l(ii,currSig) = 0;
+                        signal_counts_l(ii,sg) = 0;
                     else
-                        signal_counts_l(ii,currSig) = length(numSig);
+                        signal_counts_l(ii,sg) = length(numSig);
                     end
                 end
+                clear numSig currBin ii
                  
             end
-            clear currSig numSig currBin ii
+            clear currSig sg
             
             % calculate fraction of signals of interest
-            counts_v_4div = [counts_v,counts_v,counts_v,counts_v];
-            counts_l_4div = [counts_l,counts_l,counts_l,counts_l];
-            signal_frac_v = signal_counts_v./counts_v_4div;
-            signal_frac_l = signal_counts_l./counts_l_4div;
-            clear counts_v_4div counts_l_4div
+            counts_v_8div = [counts_v,counts_v,counts_v,counts_v,counts_v,counts_v,counts_v,counts_v];
+            counts_l_8div = [counts_l,counts_l,counts_l,counts_l,counts_l,counts_l,counts_l,counts_l];
+            signal_frac_v = signal_counts_v./counts_v_8div;
+            signal_frac_l = signal_counts_l./counts_l_8div;
+            clear counts_v_8div counts_l_8div
             
             
-            % plot fraction of H2L
-            figure(7)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,1),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_vol])
-            title(strcat(num2str(condition),'-',date,'-fracH2L'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
-            
-            figure(8)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,1),'filled')
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_length])
-            title(strcat(num2str(condition),'-',date,'-fracH2L'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth length (um)')
-            
-            
-            % plot fraction of L2H
-            figure(9)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,2),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_vol])
-            title(strcat(num2str(condition),'-',date,'-fracL2H'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
-            
-            figure(10)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,2),'filled')
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_length])
-            title(strcat(num2str(condition),'-',date,'-fracL2H'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth length (um)')
-            
-            % plot fraction of only H
-            figure(11)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,3),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_vol])
-            title(strcat(num2str(condition),'-',date,'-fracOnlyH'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
-            
-            figure(12)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,3),'filled')
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_length])
-            title(strcat(num2str(condition),'-',date,'-fraconlyH'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth length (um)')
-            
-            
-            % plot fraction of only L
-            figure(13)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,4),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_vol])
-            title(strcat(num2str(condition),'-',date,'-fracOnlyL'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
-            
-            figure(14)
-            subplot(2,2,condition)
-            scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,4),'filled')
-            colormap(parula) % see colormap documentation
-            colorbar;
-            axis([0 max_lambda 0 max_length])
-            title(strcat(num2str(condition),'-',date,'-fraconlyL'))
-            xlabel('mean growth rate (1/h)')
-            ylabel('birth length (um)')
-            
+            for sgg = 1:6
+                
+                % plot fraction of current signal of interest
+                figure(7)
+                subplot(2,2,condition)
+                scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,1),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
+                colormap(parula) % see colormap documentation
+                colorbar;
+                axis([0 plot_lambda 0 plot_vol])
+                title(strcat(num2str(condition),'-',date,'-',sigNames{sgg}))
+                xlabel('mean growth rate (1/h)')
+                ylabel('birth volume (cubic um)')
+                
+                
+                figure(8)
+                subplot(2,2,condition)
+                scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,1),'filled')
+                colormap(parula) % see colormap documentation
+                colorbar;
+                axis([0 plot_lambda 0 plot_length])
+                title(strcat(num2str(condition),'-',date,'-',sigNames{sgg}))
+                xlabel('mean growth rate (1/h)')
+                ylabel('birth length (um)')
+                
+                
+                % save plots for only condition 1
+                figure(7)
+                plotName = strcat('A5-heated-',sigNames{sgg},'-',date,'-vol');
+                saveas(gcf,plotName,'epsc')
+                close(gcf)
+                
+                figure(8)
+                plotName = strcat('A5-heated-',sigNames{sgg},'-',date,'-length');
+                saveas(gcf,plotName,'epsc')
+                close(gcf)
+               
+                
+                % for sanity check, see below
+                types_counted(sgg) = length(find(signalType == sigArray(sgg)));
+                
+            end
+           
             % sanity check, plot bar plot of signal types
-            types_all = [onlyH, onlyL, H2L, L2H, HLH, LHL];
-            types_counted(onlyH) = length(find(signalType == onlyH));
-            types_counted(onlyL) = length(find(signalType == onlyL));
-            types_counted(H2L) = length(find(signalType == H2L));
-            types_counted(L2H) = length(find(signalType == L2H));
-            types_counted(HLH) = length(find(signalType == HLH));
-            types_counted(LHL) = length(find(signalType == LHL));
-            
             figure(15)
-            bar(types_all,types_counted)
+            bar(sigArray(1:sgg),types_counted)
             ylabel('counts')
             xlabel('types')
             title(date)
-            barNames = {'onlyH'; 'onlyL'; 'H2L'; 'L2H'; 'HLH';'LHL' };
-            set(gca,'xticklabel',barNames)
+            set(gca,'xticklabel',sigNames)
+            
         end
         
-        
-        
+
     end
     
     
-     % 12. save plots
+    % 12. save plots
     cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
     
     figure(1)
@@ -730,50 +694,12 @@ for ee = 9:length(exptArray)
     close(gcf)
     
     if timescale == 3600
-        figure(7)
-        plotName = strcat('A5-heated-H2L-fig7-',date,'-vol');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(8)
-        plotName = strcat('A5-heated-H2L-fig8-',date,'-length');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(9)
-        plotName = strcat('A5-heated-L2H-fig9-',date,'-vol');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(10)
-        plotName = strcat('A5-heated-L2H-fig10-',date,'-length');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(11)
-        plotName = strcat('A5-heated-onlyH-fig11-',date,'-vol');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(12)
-        plotName = strcat('A5-heated-onlyH-fig12-',date,'-length');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(13)
-        plotName = strcat('A5-heated-onlyL-fig13-',date,'-vol');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(14)
-        plotName = strcat('A5-heated-onlyL-fig14-',date,'-length');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
+ 
         figure(15)
         plotName = strcat('A5-bar-fig15-',date);
         saveas(gcf,plotName,'epsc')
         close(gcf)
+        
     end
     
 end
