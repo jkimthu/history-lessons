@@ -17,7 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 23
-%  Commit: edit to save all plots in same folder
+%  Commit: edit to rotate through signal types when plotting
 
 
 %  OK let's go!
@@ -338,7 +338,7 @@ max_lambda = 5;
 
 
 % 1. loop through experiments to format data and plot
-for ee = 11%:length(exptArray)
+for ee = 12:length(exptArray)
     
     
     % 2. initialize experiment meta data
@@ -642,7 +642,7 @@ for ee = 11%:length(exptArray)
                 % plot fraction of current signal of interest
                 figure(7)
                 subplot(2,2,condition)
-                scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,1),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
+                scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,sgg),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
                 colormap(parula) % see colormap documentation
                 colorbar;
                 axis([0 plot_lambda 0 plot_vol])
@@ -653,7 +653,7 @@ for ee = 11%:length(exptArray)
                 
                 figure(8)
                 subplot(2,2,condition)
-                scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,1),'filled')
+                scatter(binned_lambdas_l,binned_length,60,signal_frac_l(:,sgg),'filled')
                 colormap(parula) % see colormap documentation
                 colorbar;
                 axis([0 plot_lambda 0 plot_length])
