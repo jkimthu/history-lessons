@@ -17,7 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 23
-%  Commit: troubleshoot signal overlay - was assigning signals incorrectly
+%  Commit: edit to save all plots in same folder
 
 
 %  OK let's go!
@@ -338,7 +338,7 @@ max_lambda = 5;
 
 
 % 1. loop through experiments to format data and plot
-for ee = 11:length(exptArray)
+for ee = 11%:length(exptArray)
     
     
     % 2. initialize experiment meta data
@@ -359,6 +359,39 @@ for ee = 11:length(exptArray)
         
         % 4. calculate lambda and nScores from compiled mus
         if isempty(eeVols) == 1
+            
+            cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
+            
+            figure(1)
+            plotName = strcat('A5-scatter-fig1-',date,'-vol');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
+            figure(2)
+            plotName = strcat('A5-scatter-fig2-',date,'-length');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
+            figure(3)
+            plotName = strcat('A5-heated-cellCounts-fig3-',date,'-vol');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
+            figure(4)
+            plotName = strcat('A5-heated-cellCounts-fig4-',date,'-length');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
+            figure(5)
+            plotName = strcat('A5-heated-nScore-fig5-',date,'-vol');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
+            figure(6)
+            plotName = strcat('A5-heated-nScore-fig6-',date,'-length');
+            saveas(gcf,plotName,'epsc')
+            close(gcf)
+            
             continue
         end
         eeLambdas = cellfun(@nanmean,eeMus);
