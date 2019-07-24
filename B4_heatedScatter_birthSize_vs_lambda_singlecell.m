@@ -16,7 +16,9 @@
 
 
 %  Last edit: jen, 2019 July 17
-%  Commit: edit to correct swapped vol for length data in heat map plotting
+%  Commit: edit to run analysis on windows workstation
+
+
 
 
 %  OK let's go!
@@ -27,7 +29,7 @@ clc
 clear
 
 % 0. initialize complete meta data
-cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+%cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 
 % 0. define method of calculating growth rate
@@ -42,7 +44,6 @@ environment = {'fluc','low','ave','high'};
 %%
 % 1. for all experiments in dataset
 ts_all = {2:4;5:7;9:12;13:15};
-%exptArray = 13:15;
 
 for ts = 1:length(ts_all)
     
@@ -73,8 +74,8 @@ for ts = 1:length(ts_all)
             
             
             % 2. load measured data
-            experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-            cd(experimentFolder)
+            %experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
+            %cd(experimentFolder)
             filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
             load(filename,'D5','T');
             
