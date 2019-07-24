@@ -20,13 +20,13 @@
 %       c) V_div/V_birth ratio
 %       d) mean growth rate of cell cycle
 %       e) nutrient score
+%       f) added volume
 
 
 
 
-%  Last edit: jen, 2019 Mar 19
-%  Commit: test statistic is standard deviation of 5 traits, lineage length
-%  is 4 cell cycles
+%  Last edit: jen, 2019 July 24
+%  Commit: update to included added volume in analysis
 
 
 %  OK let's go!
@@ -53,6 +53,9 @@ condition = 1;
 
 % 0. initialize number of loops for bootstrapping
 repeats = 10000;
+
+% 0. initialize number of generations in lineage
+numCC = 3;
 
 
 % 0. initialize nutrient signal classifications
@@ -88,6 +91,7 @@ for e = 1:length(exptArray)
     expType = storedMetaData{index}.experimentType;
     bubbletime = storedMetaData{index}.bubbletime;
     timescale = storedMetaData{index}.timescale;
+    xys = storedMetaData{index}.xys;
     disp(strcat(date, ': analyze!'))
     
 
@@ -100,20 +104,15 @@ for e = 1:length(exptArray)
     
     
     % 4. compile experiment data matrix
-    xy_start = min(min(storedMetaData{index}.xys));
-    xy_end = max(max(storedMetaData{index}.xys));
-    exptData = buildDM(D5, T, xy_start, xy_end,index,expType);
+    xy_start = xys(condition,1);
+    xy_end = xys(condition,end);
+    conditionData = buildDM(D5,T,xy_start,xy_end,index,expType);
     clear D5 T xy_start xy_end expType filename
     
     
     
     
-    % 5. isolate condition specific data
-    conditionData = exptData(exptData(:,21) == condition,:);  % col 21 = cond vals
-    
-    
-    
-    % 6. isolate volume (Va), timestamp, drop, curve, and trackNum data
+    % 5. isolate volume (Va), timestamp, drop, curve, and trackNum data
     volumes = getGrowthParameter(conditionData,'volume');            % col 11 = calculated va_vals (cubic um)
     timestamps_sec = getGrowthParameter(conditionData,'timestamp');  % col 2  = timestamp in seconds
     isDrop = getGrowthParameter(conditionData,'isDrop');             % col 4  = isDrop, 1 marks a birth event
@@ -122,20 +121,20 @@ for e = 1:length(exptArray)
     
     
     
-    % 7. calculate growth rate
+    % 6. calculate growth rate
     growthRates_all = calculateGrowthRate(volumes,timestamps_sec,isDrop,curveID,trackNum);
     growthRates = growthRates_all(:,specificColumn);
     clear volumes timestamps_sec isDrop trackNum
     
     
     
-    % 8. trim condition and growth rate data to include only full cell cycles
+    % 7. trim condition and growth rate data to include only full cell cycles
     fullData = conditionData(curveID > 0,:);
     growthRates_fullOnly = growthRates(curveID > 0,:);
     
     
     
-    % 9. calculate binary nutrient signals
+    % 8. calculate binary nutrient signals
     [binaryNutrientSignal, nScore] = nutrientScore(timescale,fullData);
     clear conditionData curveID growthRates growthRates_all timescale
     
@@ -331,19 +330,9 @@ for e = 1:length(exptArray)
     interdivs = traits_final(:,6)*60;
     traits_10plus = traits_final(interdivs > 10,:);
     signals_10plus = signal_final(interdivs > 10,:);
+    classifications = traits_10plus(:,14);
     clear signal_final traits_final signal traits interdivs
     
-    % plot distribution of nutrient signal classifications
-    classifications = traits_10plus(:,14);
-    figure(1)
-    hist(classifications,15)
-    title(strcat('Histogram of nutrient signal classifications :',date))
-    ylabel('Frequency')
-    xlabel('Signal class')
-    xlim([0 18])
-    plotName = strcat('D-histogram-nClass-',date,'-c',num2str(condition));
-    saveas(gcf,plotName,'epsc')
-    close(gcf)
 
     
     % some conditions do not have data after trimming
@@ -358,8 +347,6 @@ for e = 1:length(exptArray)
         uniqueLines = unique(lineages);
         uniqueCounts = hist(lineages,uniqueLines);
         
-        % start with 5 consequtive, then 4
-        numCC = 4;
         longLines = uniqueLines(uniqueCounts == numCC);
         clear uniqueLines uniqueCounts
         
@@ -411,6 +398,7 @@ for e = 1:length(exptArray)
                 subSampled_means(i,3) = sPop_mean(2)/sPop_mean(1); % V_div/V_birth ratio
                 subSampled_means(i,4) = sPop_mean(7); % mean growth rate of cell cycle
                 subSampled_means(i,5) = sPop_mean(9); % nutrient score
+                subSampled_means(i,6) = sPop_mean(3); % added volume
                 
                 sPop_std = std(sPop);
                 subSampled_stds(i,1) = sPop_std(6)*60;
@@ -418,39 +406,20 @@ for e = 1:length(exptArray)
                 subSampled_stds(i,3) = sPop_std(2)/sPop_std(1); % V_div/V_birth ratio
                 subSampled_stds(i,4) = sPop_std(7); % mean growth rate of cell cycle
                 subSampled_stds(i,5) = sPop_std(9); % nutrient score
+                subSampled_stds(i,6) = sPop_std(3); % added volume
                 
             end
             clear i sPop sPop_mean
             
             
             % iv. histograms and means of bootstrapped test stats
-            for h = 1:5
+            for h = 1:6
                 
                 meanStat(1,h) = mean(subSampled_means(:,h));
                 stdStat(1,h) = mean(subSampled_stds(:,h));
                 
-                figure(1)
-                subplot(1,5,h)
-                hist(subSampled_means(:,h))
-                title(num2str(meanStat(1,h)))
-                
-                figure(2)
-                subplot(1,5,h)
-                hist(subSampled_stds(:,h))
-                title(num2str(stdStat(1,h)))
-                
             end
-            figure(1)
-            plotName = strcat('D-subsample-histograms-mean-',date,'-c',num2str(condition),'-line',num2str(l));
-            saveas(gcf,plotName,'epsc')
-            close(gcf)
-            clear h plotName
             
-            figure(2)
-            plotName = strcat('D-subsample-histograms-std-',date,'-c',num2str(condition),'-line',num2str(l));
-            saveas(gcf,plotName,'epsc')
-            close(gcf)
-            clear h plotName
             
             
             % v. determine probability of getting something more
@@ -460,12 +429,14 @@ for e = 1:length(exptArray)
             lineage_means(l,3) = mean(currentTraits(:,2)./currentTraits(:,1));
             lineage_means(l,4) = mean(currentTraits(:,7));
             lineage_means(l,5) = mean(currentTraits(:,9));
+            lineage_means(l,6) = mean(currentTraits(:,3));
             
             lineage_stds(l,1) = std(currentTraits(:,6)) * 60;
             lineage_stds(l,2) = std(currentTraits(:,1));
             lineage_stds(l,3) = std(currentTraits(:,2)./currentTraits(:,1));
             lineage_stds(l,4) = std(currentTraits(:,7));
             lineage_stds(l,5) = std(currentTraits(:,9));
+            lineage_stds(l,6) = std(currentTraits(:,3));
             
             % more extreme greater than distance between lineage mean
             % and bootstrapped mean
@@ -476,7 +447,7 @@ for e = 1:length(exptArray)
             extreme_lows = stdStat - distance;
             extreme_highs = stdStat + distance;
             
-            for col = 1:5
+            for col = 1:6
                 count_lows(:,col) = subSampled_stds(:,col) < extreme_lows(col);
                 count_highs(:,col) = subSampled_stds(:,col) > extreme_highs(col);
             end
@@ -489,11 +460,11 @@ for e = 1:length(exptArray)
         
     end
     
-    save(strcat('D-',date,'-std-c1-length4'),'pVals','lineage_stds')
+    save(strcat('D-',date,'-std-c',num2str(condition),'-length',num2str(numCC)),'pVals','lineage_stds','lineage_means')
     
     clear signals_10plus traits_10plus classifications
     clear pVals lineage_means interdivs
-    clear currentClasses currentLine currentTraits numCC
+    clear currentClasses currentLine currentTraits
 end
 clear specificColumn bubbletime repeats
 
