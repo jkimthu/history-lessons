@@ -26,6 +26,8 @@ A5. Heated scatter plots of the bins plotted in A3;
 A6. like A5, heated scatter plots but tau vs lambda
 	(interdivision time vs mean growth rate across cell cycle)
 	
+A7. like A5, heated scatter plots but for added size vs lambda
+	(looks at added volume and added length)
 
 B1. Mean division size vs mean birth size, population level
 
