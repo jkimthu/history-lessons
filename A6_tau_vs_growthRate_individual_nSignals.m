@@ -1,4 +1,4 @@
-%% Figure A5: what nutrient signals are associated with each individual-level bin?
+%% Figure A6: what nutrient signals are associated with each individual-level bin?
 
 
 %  Goal: could nutrient signal explain the spread observed between
@@ -17,7 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 25
-%  Commit: first commit with interdivision time
+%  Commit: edit to improve comments and readability
 
 
 %  OK let's go!
@@ -49,7 +49,7 @@ compiled_lambda = cell(length(exptArray),1);
 compiled_signal = cell(length(exptArray),1);
 
 
-%% Part 2. collect single cell birth size and instantaneous growth rates
+%% Part 2. collect single cell interdivision times and instantaneous growth rates
 
 %  Strategy:
 %
@@ -59,7 +59,7 @@ compiled_signal = cell(length(exptArray),1);
 %               4. compile experiment data matrix
 %               5. for each condition in experiment...
 %                       5. isolate condition specific data
-%                       6. isolate volume (Va), timestamp, drop, curve, and trackNum data
+%                       6. isolate curveDuration, timestamp, drop, curve, and trackNum data
 %                       7. calculate growth rate
 %                       8. trim condition and growth rate data to include only full cell cycles
 %                       9. isolate isDrop, timestamp, and timeSinceBirth data
@@ -92,7 +92,6 @@ for e = 11:length(exptArray)
     
     % 3. initialize experiment specific variables
     interDiv = cell(length(bubbletime),1);
-    %birthLength = cell(length(bubbletime),1);
     mu_instantaneous = cell(length(bubbletime),1);
     nSignal = cell(length(bubbletime),1);
     
@@ -146,7 +145,6 @@ for e = 11:length(exptArray)
         
         % 9. calculate binary nutrient signals
         [binaryNutrientSignal, nScore] = nutrientScore(timescale,conditionData_fullOnly);
-        %clear timescale
         
         
         
@@ -154,29 +152,25 @@ for e = 11:length(exptArray)
         timestamps = getGrowthParameter(conditionData_fullOnly,'timestamp');  % timestamp in seconds
         timestamps_hr = timestamps./3600;    % convert timestamp to hours
         isDrop = getGrowthParameter(conditionData_fullOnly,'isDrop');      % isDrop, 1 marks a birth event
-        volumes = getGrowthParameter(conditionData_fullOnly,'volume');     % calculated va_vals (cubic um)
+        volume = getGrowthParameter(conditionData_fullOnly,'volume');     % calculated va_vals (cubic um)
         tau = getGrowthParameter(conditionData_fullOnly,'curveDurations'); % tau repeated for entire growth curve
-        %majorAxis = getGrowthParameter(conditionData_fullOnly,'length');   % length (um)
         clear timestamps
         
         
         
         % 11. extract only final timeSinceBirth from each growth curve, this is the inter-division time!
-        final_birthSize = volumes(isDrop==1);
+        final_birthSize = volume(isDrop==1);
         final_tau = tau(isDrop==1);
-        %final_birthLength = majorAxis(isDrop==1);
         finalTimestamps = timestamps_hr(isDrop==1); % experiment timestamp (hours) of each division event.
         clear conditionData_fullOnly timestamps_hr
         
         
         
         % 12. remove zeros, which occur if no full track data exists at a drop
-        %Vbirth = final_birthSize(final_birthSize > 0);
-        %Lbirth = final_birthLength(final_birthSize > 0);
         interdivisionT = final_tau(final_birthSize > 0);
         birthTimestamps = finalTimestamps(final_birthSize > 0);
         curveIDs = curveIDs_unique(final_birthSize > 0);
-        clear final_birthSize finalTimestamps volumes final_tau tau
+        clear final_birthSize finalTimestamps volume final_tau tau
         
         
         
@@ -188,14 +182,12 @@ for e = 11:length(exptArray)
         if maxTime > 0
 
             interdivisionT_bubbleTrimmed = interdivisionT(birthTimestamps <= maxTime,:);
-            %Lbirth_bubbleTrimmed = Lbirth(birthTimestamps <= maxTime,:);
             curveIDs_bubbleTrimmed_cc = curveIDs(birthTimestamps <= maxTime,:);
             birthTimestamps_bubbleTrimmed = birthTimestamps(birthTimestamps <= maxTime,:);
              
         else
             
             interdivisionT_bubbleTrimmed = interdivisionT;
-            %Lbirth_bubbleTrimmed = Lbirth;
             curveIDs_bubbleTrimmed_cc = curveIDs;
             birthTimestamps_bubbleTrimmed = birthTimestamps;
             
@@ -207,7 +199,6 @@ for e = 11:length(exptArray)
         % 14. truncate data to stabilized regions
         minTime = 3;
         interdivisionT_fullyTrimmed = interdivisionT_bubbleTrimmed(birthTimestamps_bubbleTrimmed >= minTime,:);
-        %Lbirth_fullyTrimmed = Lbirth_bubbleTrimmed(birthTimestamps_bubbleTrimmed >= minTime,:);
         curveIDs_fullyTrimmed_cc = curveIDs_bubbleTrimmed_cc(birthTimestamps_bubbleTrimmed >= minTime,:);        
         clear interdivisionT_bubbleTrimmed  curveIDs_bubbleTrimmed_cc birthTimestamps_bubbleTrimmed
         
@@ -227,12 +218,10 @@ for e = 11:length(exptArray)
             
             % ii. remove cell cycles of WAY LARGE birth size, tracking IDs
             tau_temp = interdivisionT_fullyTrimmed(interdivisionT_fullyTrimmed <= (tau_median+tau_std_temp*3)); % cut largest vals, over 3 std out
-            %birthLength_temp = Lbirth_fullyTrimmed(interdivisionT_fullyTrimmed <= (tau_median+tau_std_temp*3));
             IDs_temp = curveIDs_fullyTrimmed_cc(interdivisionT_fullyTrimmed <= (tau_median+tau_std_temp*3));
             
             % iii. remove cell cycle of WAY SMALL birth size, tracking IDs
             tau_final = tau_temp(tau_temp >= (tau_median-tau_std_temp*3));          % cut smallest vals, over 3 std out
-            %birthLength_final = birthLength_temp(tau_temp >= (tau_median-tau_std_temp*3)); 
             IDs_final = IDs_temp(tau_temp >= (tau_median-tau_std_temp*3));   
             clear tau_median tau_std_temp tau_temp IDs_temp
             
@@ -260,13 +249,11 @@ for e = 11:length(exptArray)
             
             mus = mus(meanGR > 0);
             tau_final = tau_final(meanGR > 0);
-            %birthLength_final = birthLength_final(meanGR > 0);
             signals = signals(meanGR > 0);
             
             
             % 17. store condition data into one variable per experiment
             interDiv{condition} = tau_final;
-            %birthLength{condition} = birthLength_final;
             mu_instantaneous{condition} = mus;
             nSignal{condition} = signals;
         
@@ -324,22 +311,20 @@ palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
 environment_order = {'low',30,300,900,3600,'ave','high'};
 shape = 'o';
 
-plot_tau = 8;
+plot_tau = 90;
 plot_lambda = 4;
 
 
 % 0. initialize binning
 binSize_mu = 0.25; % 1/h
 binSize_tau = 1;  % min
-%binSize_length = 0.25; % um
 
-max_tau = 90;
-%max_length = 11;
+max_tau = 110;
 max_lambda = 5;
 
 
 % 1. loop through experiments to format data and plot
-for ee = 11:length(exptArray)
+for ee = 11%:length(exptArray)
     
     
     % 2. initialize experiment meta data
@@ -352,14 +337,13 @@ for ee = 11:length(exptArray)
     for condition = 1:4
         
         % 3. isolate experiment data
-        eeVols = compiled_tau{ee}{condition};
-        eeLengths = compiled_birthLength{ee}{condition};
+        eeTaus = compiled_tau{ee}{condition}./60; % convert from sec to h
         eeMus = compiled_lambda{ee}{condition};
         eeSignals = compiled_signal{ee}{condition};
         
         
         % 4. calculate lambda and nScores from compiled mus
-        if isempty(eeVols) == 1
+        if isempty(eeTaus) == 1
             
             cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
             
@@ -402,8 +386,7 @@ for ee = 11:length(exptArray)
             
             
             % 5. remove data with too large growth rates
-            volumes = eeVols(eeLambdas <= max_lambda);
-            lengths = eeLengths(eeLambdas <= max_lambda);
+            taus = eeTaus(eeLambdas <= max_lambda);
             nSignals = eeSignals(eeLambdas <= max_lambda);
             nScores = eeNscores(eeLambdas <= max_lambda);
             lambdas = eeLambdas(eeLambdas <= max_lambda);
@@ -416,98 +399,82 @@ for ee = 11:length(exptArray)
             % birth volume vs. mean growth rate
             figure(1)
             subplot(2,2,condition)
-            plot(eeLambdas,eeVols,'o','Color',color)
+            plot(eeLambdas,eeTaus,'o','Color',color)
             hold on
             title(date)
             xlabel('mean growth rate (1/h)')
             ylabel('birth volume (cubic um)')
             axis([0 max_lambda 0 max_tau])
             
-            clear color eeLambdas eeVols eeLengths eeSignals eeNscores
+            clear color eeLambdas eeTaus eeSignals eeNscores
             
             
             
             % 7. assign each cc to bins based on volume/length and growth rate
-            bin_birthVol = ceil(volumes/binSize_tau);
-            bin_birthLength = ceil(lengths/binSize_length);
+            bin_tau = ceil(taus/binSize_tau);
             bin_lambda = ceil(lambdas/binSize_mu);
             
             
             % 8. sort cell cycles into 2D bins: volume/length vs growth rate
             
             %    i. initialize 2D bin matrix
-            bin_matrix_vol = zeros(max_tau/binSize_tau,max_lambda/binSize_mu);           % vol vs lambda
-            bin_matrix_length = zeros(max_length/binSize_length,max_lambda/binSize_mu);  % length vs lambda
+            bin_matrix_tau = zeros(max_tau/binSize_tau,max_lambda/binSize_mu);           % vol vs lambda
+            
             
             %   ii. assign cell cycle into a 2D bin, identified as a linear index of bin matrix
-            linidx_vol = sub2ind(size(bin_matrix_vol),bin_birthVol,bin_lambda);
-            linidx_len = sub2ind(size(bin_matrix_length),bin_birthLength,bin_lambda);
+            linidx_tau = sub2ind(size(bin_matrix_tau),bin_tau,bin_lambda);
+
             
             %  iii. identify bins in matrix with cell cycle data, count number of cc per bin
-            bins_unique_vol = unique(linidx_vol);
-            out_v = [bins_unique_vol,histc(linidx_vol(:),bins_unique_vol)]; % outputs linear index in column 1, number of counts per index in column 2
-            idx_v = out_v(:,1);
-            counts_v = out_v(:,2);
+            bins_unique_tau = unique(linidx_tau);
+            out = [bins_unique_tau,histc(linidx_tau(:),bins_unique_tau)]; % outputs linear index in column 1, number of counts per index in column 2
+            idx = out(:,1);
+            counts = out(:,2);
             
-            bins_unique_len = unique(linidx_len);
-            out_l = [bins_unique_len,histc(linidx_len(:),bins_unique_len)];
-            idx_l = out_l(:,1);
-            counts_l = out_l(:,2);
             
             %  iv. assign count values to matrix bins with 2D subscripts
-            bin_matrix_vol(out_v(:,1)) = out_v(:,2);
-            bin_matrix_length(out_l(:,1)) = out_l(:,2);
-            
-            [iv,jv] = ind2sub(size(bin_matrix_vol),idx_v);
-            [il,jl] = ind2sub(size(bin_matrix_length),idx_l);
-            clear bin_matrix_vol bin_matrix_length out_l idx_l out_v idx_v
+            bin_matrix_tau(out(:,1)) = out(:,2);
+            [i,j] = ind2sub(size(bin_matrix_tau),idx);
+            clear bin_matrix_tau out idx
             
             %   v. scale subscripts by bin size such to reflect real size and growth rate values
-            binned_lambdas_v = jv.*binSize_mu;
-            binned_vol = iv.*binSize_tau;
-            
-            binned_lambdas_l = jl.*binSize_mu;
-            binned_length = il.*binSize_length;
-            clear jv jl iv il
+            binned_lambdas = j.*binSize_mu;
+            binned_tau = i.*binSize_tau;
+            clear j i
             
             
             % 9. plot scatter, heated by cell cycle counts
             figure(2)
             subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,counts_v,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
+            scatter(binned_lambdas,binned_tau,60,counts,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
             colormap(parula) % see colormap documentation
             colorbar;
-            axis([0 plot_lambda 0 plot_vol])
+            axis([0 plot_lambda 10 plot_tau])
             title(strcat(num2str(condition),'-',date))
             xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
+            ylabel('interdivison time (min)')
             
             
             
             
             % 10. plot scatter, heated by mean nScore
-            nScores_by_vbins = accumarray(linidx_vol,nScores,[],@(x) {x});
-            nScores_by_lbins = accumarray(linidx_len,nScores,[],@(x) {x});
-            
-            nScores_vol = nScores_by_vbins(~cellfun('isempty',nScores_by_vbins));
-            nScores_len = nScores_by_lbins(~cellfun('isempty',nScores_by_lbins));
-            
-            nScores_vol = cellfun(@mean,nScores_vol);
-            nScores_len = cellfun(@mean,nScores_len);
-            clear nScores_by_vbins nScores_by_lbins
+            nScores_by_bins = accumarray(linidx_tau,nScores,[],@(x) {x});
+            nScores = nScores_by_bins(~cellfun('isempty',nScores_by_bins));
+            nScores = cellfun(@mean,nScores);
+            clear nScores_by_bins 
             
             
             figure(3)
             subplot(2,2,condition)
-            scatter(binned_lambdas_v,binned_vol,60,nScores_vol,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
+            scatter(binned_lambdas,binned_tau,60,nScores,'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
             colormap(parula) % see colormap documentation
             colorbar;
-            axis([0 plot_lambda 0 plot_vol])
+            axis([0 plot_lambda 10 plot_tau])
             title(strcat(num2str(condition),'-',date,'-heated-nScore'))
             xlabel('mean growth rate (1/h)')
-            ylabel('birth volume (cubic um)')
+            ylabel('interdiv time (min)')
             
-            clear nScores_len nScores_vol
+            clear nScores
             
             
             % 11. plot scatter, heated by signal type
@@ -558,18 +525,16 @@ for ee = 11:length(exptArray)
                 end
                 clear currSignal ds_dt currShifts cc
                 
-                types_by_vbins = accumarray(linidx_vol,signalType,[],@(x) {x});
-                types_by_lbins = accumarray(linidx_len,signalType,[],@(x) {x});
-                
-                types_vol = types_by_vbins(~cellfun('isempty',types_by_vbins));
-                types_len = types_by_lbins(~cellfun('isempty',types_by_lbins));
+                types_by_bins = accumarray(linidx_tau,signalType,[],@(x) {x});
+                types = types_by_bins(~cellfun('isempty',types_by_bins));
+          
                 
                 
                 % count signals of interest per bin
                 sigArray = [onlyH; onlyL; H2L; L2H; HLH; LHL; HLHL; LHLH];
                 sigNames = {'onlyH','onlyL','H2L','L2H','HLH','LHL','HLHL','LHLH'};
-                signal_counts_v = zeros(length(types_vol),length(sigArray));
-                signal_counts_l = zeros(length(types_len),length(sigArray));
+                signal_counts = zeros(length(types),length(sigArray));
+
                 
                 for sg = 1:length(sigArray)
                     
@@ -577,24 +542,13 @@ for ee = 11:length(exptArray)
                     currName = sigNames{sg};
                     
                     % binned by volume data
-                    for ii = 1:length(types_vol)
-                        currBin = types_vol{ii};
+                    for ii = 1:length(types)
+                        currBin = types{ii};
                         numSig = find(currBin == currSig);
                         if isempty(numSig) == 1
-                            signal_counts_v(ii,sg) = 0;
+                            signal_counts(ii,sg) = 0;
                         else
-                            signal_counts_v(ii,sg) = length(numSig);
-                        end
-                    end
-                    
-                    % binned by length data
-                    for ii = 1:length(types_len)
-                        currBin = types_len{ii};
-                        numSig = find(currBin == currSig);
-                        if isempty(numSig) == 1
-                            signal_counts_l(ii,sg) = 0;
-                        else
-                            signal_counts_l(ii,sg) = length(numSig);
+                            signal_counts(ii,sg) = length(numSig);
                         end
                     end
                     clear numSig currBin ii
@@ -602,12 +556,11 @@ for ee = 11:length(exptArray)
                 end
                 clear currSig sg
                 
+                
                 % calculate fraction of signals of interest
-                counts_v_8div = [counts_v,counts_v,counts_v,counts_v,counts_v,counts_v,counts_v,counts_v];
-                counts_l_8div = [counts_l,counts_l,counts_l,counts_l,counts_l,counts_l,counts_l,counts_l];
-                signal_frac_v = signal_counts_v./counts_v_8div;
-                signal_frac_l = signal_counts_l./counts_l_8div;
-                clear counts_v_8div counts_l_8div
+                counts_8div = [counts,counts,counts,counts,counts,counts,counts,counts];
+                signal_frac_v = signal_counts./counts_8div;
+                clear counts_8div
                 
                 
                 for sgg = 1:length(sigArray)
@@ -615,10 +568,10 @@ for ee = 11:length(exptArray)
                     % plot fraction of current signal of interest
                     figure(4)
                     subplot(2,2,condition)
-                    scatter(binned_lambdas_v,binned_vol,60,signal_frac_v(:,sgg),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
+                    scatter(binned_lambdas,binned_tau,60,signal_frac_v(:,sgg),'filled') % scatter(x axis bin, y axis bin, circle size, value of color)
                     colormap(parula) % see colormap documentation
                     colorbar;
-                    axis([0 plot_lambda 0 plot_vol])
+                    axis([0 plot_lambda 10 plot_tau])
                     title(strcat(num2str(condition),'-',date,'-',sigNames{sgg}))
                     xlabel('mean growth rate (1/h)')
                     ylabel('tau (cubic um)')
@@ -637,7 +590,7 @@ for ee = 11:length(exptArray)
                 end
                 
                 % sanity check, plot bar plot of signal types
-                figure(15)
+                figure(5)
                 bar(sigArray(1:sgg),types_counted)
                 ylabel('counts')
                 xlabel('types')
@@ -654,17 +607,17 @@ for ee = 11:length(exptArray)
         cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
         
         figure(1)
-        plotName = strcat('A6-scatter-fig1-',date,'-vol');
+        plotName = strcat('A6-scatter-fig1-',date,'-tau');
         saveas(gcf,plotName,'epsc')
         close(gcf)
         
         figure(2)
-        plotName = strcat('A6-heated-cellCounts-fig3-',date,'-vol');
+        plotName = strcat('A6-heated-cellCounts-fig2-',date,'-tau');
         saveas(gcf,plotName,'epsc')
         close(gcf)
         
         figure(3)
-        plotName = strcat('A6-heated-nScore-fig5-',date,'-vol');
+        plotName = strcat('A6-heated-nScore-fig3-',date,'-tau');
         saveas(gcf,plotName,'epsc')
         close(gcf)
         
@@ -674,7 +627,7 @@ for ee = 11:length(exptArray)
     if timescale == 3600
         
         figure(5)
-        plotName = strcat('A6-bar-fig15-',date);
+        plotName = strcat('A6-bar-fig5-',date);
         saveas(gcf,plotName,'epsc')
         close(gcf)
         
