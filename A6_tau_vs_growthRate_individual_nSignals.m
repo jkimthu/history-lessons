@@ -16,8 +16,8 @@
 
 
 
-%  Last edit: jen, 2019 July 25
-%  Commit: edit to improve comments and readability
+%  Last edit: jen, 2019 July 26
+%  Commit: workstation run with all experiments
 
 
 %  OK let's go!
@@ -28,7 +28,7 @@ clear
 clc
 
 % 0. initialize complete meta data
-cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+%cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
 dataIndex = find(~cellfun(@isempty,storedMetaData));
 
@@ -76,7 +76,7 @@ compiled_signal = cell(length(exptArray),1);
 
 
 % 1. loop through each experiment to collect data
-for e = 11:length(exptArray)
+for e = 1:length(exptArray)
  
     
     % 2. initialize experiment meta data
@@ -98,8 +98,8 @@ for e = 11:length(exptArray)
     
     
     % 4. load measured experiment data    
-    experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
-    cd(experimentFolder)
+    %experimentFolder = strcat('/Users/jen/Documents/StockerLab/Data/LB/',date);
+    %cd(experimentFolder)
     filename = strcat('lb-fluc-',date,'-c123-width1p4-c4-1p7-jiggle-0p5.mat');
     load(filename,'D5','T');
     
@@ -268,7 +268,7 @@ for e = 11:length(exptArray)
     compiled_lambda{e} = mu_instantaneous;
     compiled_signal{e} = nSignal;
 end
-
+%%
 % 19. save hard earned data
 save('A6_data.mat','compiled_tau','compiled_lambda','compiled_signal','exptArray')
 
@@ -636,8 +636,36 @@ for ee = 11%:length(exptArray)
 end
 
 
+%% Part 4. plot distribution of interdivision time across conditions
 
 
+clear
+clc
+
+% 0. initialize complete meta data
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+load('A6_data.mat')
+
+% 0. initialize plotting parameters
+%palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
+palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
+environment_order = {'low',30,300,900,3600,'ave','high'};
 
 
+% 1. 
 
+
+    % inter-division time
+    figure(4)
+    if ec == 1
+        distributionPlot(binned_divisionTimes,'widthDiv',[2 1],'histOri','left','color',rgb('Pink'),'showMM',2) % green
+    else
+        distributionPlot(gca,binned_divisionTimes,'widthDiv',[2 2],'histOri','right','color',rgb('Thistle'),'showMM',2) % purple
+    end
+    xlabel('growth condition')
+    ylabel('inter-division time (min)')
+    title('histograms of interdivision time across conditions')
+    legend('left: 2017-11-12 (30sec)','right: 2018-02-01 (60min)')
+    axis([0 5 0 100])
+    
