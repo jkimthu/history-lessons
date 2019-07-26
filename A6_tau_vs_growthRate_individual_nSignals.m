@@ -17,7 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 26
-%  Commit: add violin plot to compare 15 and 60 min distributions of tau
+%  Commit: add mean and median calculations
 
 %  OK let's go!
 
@@ -679,7 +679,6 @@ goodies = {nots_rep1, nots_rep2, nots_rep3};
 
 
 % 4. plot replicate distributions of interdivision time as violin plot
-
 figure(1)
 distributionPlot(deviants,'widthDiv',[2 1],'histOri','left','color',rgb('DarkBlue'),'showMM',2)
 hold on
@@ -689,3 +688,10 @@ ylabel('inter-division time (min)')
 title('histograms of interdivision time across conditions')
 legend('left: 60 min','right: 15 min')
 
+
+% 5. report mean and median of each replicate
+deviants_mean = cellfun(@mean,deviants)
+deviants_median = cellfun(@median,deviants)
+
+goodies_mean = cellfun(@mean,goodies)
+goodies_median = cellfun(@median,goodies)
