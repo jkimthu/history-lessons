@@ -24,9 +24,9 @@
 
 
 
-
 %  Last edit: jen, 2019 July 24
-%  Commit: update to included added volume in analysis
+%  Commit: first commit, bootstrap test on steady average to determine
+%          lineage dependencies
 
 
 %  OK let's go!
@@ -49,35 +49,14 @@ specificColumn = 3;      % for selecting log2 column in growthRates
 
 % 0. initialize experiments and condition to use in analysis
 exptArray = 13:15; % use corresponding dataIndex values
-condition = 1;
+condition = 3;
+
+% 0. initialize number of generations in lineage
+numCC = 4;
 
 % 0. initialize number of loops for bootstrapping
 repeats = 10000;
 
-% 0. initialize number of generations in lineage
-numCC = 3;
-
-
-% 0. initialize nutrient signal classifications
-classRules = [ 0,0,0,0,0; ... % 1  only low
-    1,0,0,0,0; ...            % 2
-    1,1,0,0,0; ...            % 3
-    1,1,1,0,0; ...            % 4
-    1,1,1,1,0; ...            % 5
-    1,1,1,1,1; ...            % 6   only high
-    0,1,1,1,1; ...            % 7
-    0,0,1,1,1; ...            % 8
-    0,0,0,1,1; ...            % 9
-    0,0,0,0,1; ...            % 10
-    1,0,0,0,1; ...            % 11
-    1,0,0,1,1; ...            % 12
-    1,1,0,0,1; ...            % 13
-    1,1,0,1,1; ...            % 14  impossible?
-    0,1,1,1,0; ...            % 15
-    0,1,1,0,0; ...            % 16
-    0,0,1,1,0; ...            % 17
-    0,0,1,0,0; ...            % 18  impossible?
-    ];
 
 %%
 
@@ -134,13 +113,7 @@ for e = 1:length(exptArray)
     
     
     
-    % 8. calculate binary nutrient signals
-    [binaryNutrientSignal, nScore] = nutrientScore(timescale,fullData);
-    clear conditionData curveID growthRates growthRates_all timescale
-    
-    
-    
-    % 10. isolate volume, isDrop, curveID, trackNum and timestamp data
+    % 8. isolate volume, isDrop, curveID, trackNum and timestamp data
     volumes = getGrowthParameter(fullData,'volume');
     isDrop = getGrowthParameter(fullData,'isDrop');     % isDrop == 1 marks a birth event
     curveIDs = getGrowthParameter(fullData,'curveFinder');
@@ -150,27 +123,27 @@ for e = 1:length(exptArray)
     clear timestamps_sec
     
     
-    % 11. identity unique cell cycles by ID number
+    % 9. identity unique cell cycles by ID number
     cellCycles = curveIDs(isDrop == 1);
     birthTimes = timestamps_hr(isDrop == 1);
     tracks = trackNum(isDrop == 1);
     clear fullData
     
     
-    % 12. remove birth times prior to 3 hr
+    % 10. remove birth times prior to 3 hr
     birthTimes_post3 = birthTimes(birthTimes > 3);
     cellCycles_post3 = cellCycles(birthTimes > 3);
     tracks_post3 = tracks(birthTimes > 3);
     clear cellCycles birthTimes tracks
     
     
-    % 13. remove birth times post bubbles
+    % 11. remove birth times post bubbles
     cellCyles_final = cellCycles_post3(birthTimes_post3 < bubbletime(condition));
     tracks_final = tracks_post3(birthTimes_post3 < bubbletime(condition));
     clear cellCycles_post3 birthTimes_post3 tracks_post3
     
     
-    % 14. for remaining cell cycles, identify:
+    % 12. for remaining cell cycles, identify:
     %       1. volume at birth
     %       2. volume at division
     %       3. interdivision time
@@ -183,14 +156,8 @@ for e = 1:length(exptArray)
         currentVolumes = volumes(curveIDs == cellCyles_final(cc));
         currentTimestamps = timestamps_hr(curveIDs == cellCyles_final(cc));
         currentGrowthRates = growthRates_fullOnly(curveIDs == cellCyles_final(cc));
-        currentBinarySignal = binaryNutrientSignal(curveIDs == cellCyles_final(cc));
-        currentNscore = nScore(curveIDs == cellCyles_final(cc));
         currentTrack = tracks_final(cc);
         currentCC = cellCyles_final(cc);
-        
-        if length(unique(currentNscore)) ~= 1
-            error('Nscore in current cell cycle is not unique: error in calling cell cycle or score')
-        end
         
         ccData(cc,1) = currentVolumes(1);       % V_birth
         ccData(cc,2) = currentVolumes(end);     % V_division
@@ -200,46 +167,9 @@ for e = 1:length(exptArray)
         ccData(cc,6) = currentTimestamps(end) - currentTimestamps(1); % interdivision time
         ccData(cc,7) = nanmean(currentGrowthRates); % mean growth rate
         ccData(cc,8) = nanstd(currentGrowthRates);  % standard deviation in growth rate
-        ccData(cc,9) = currentNscore(1);               % nScore
         
-        
-        ccSignal{cc,1} = currentBinarySignal;        % binary signal (1 = high, 0 = low)
-        
-        
-        isSwitch = [0; diff(currentBinarySignal)] ~= 0;
-        numShifts = sum(isSwitch);
-        if numShifts > 0
-            switches{cc,1} = find(isSwitch == 1);
-            shiftStage = switches{cc}(1)/length(currentBinarySignal); % fraction into cell cycle of first switch
-        else
-            switches{cc,1} = NaN;
-            shiftStage = NaN;
-        end
-        
-        
-        ccData(cc,10) = numShifts;
-        ccData(cc,11) = shiftStage; % first if multiple
         ccData(cc,12) = currentTrack;
         ccData(cc,13) = currentCC;
-        
-        
-        % classify binary signal
-        
-        % bin cell cycle into 5ths,
-        % considering 5ths as "high N" if over half includes high nutrient
-        fractions = linspace(1,length(currentBinarySignal),length(currentBinarySignal))/length(currentBinarySignal);
-        bins_percent = ceil(fractions'*5);
-        binned = round(accumarray(bins_percent,currentBinarySignal,[],@mean));
-        
-        % classify signal
-        for cl = 1:length(classRules)
-            currentClass = classRules(cl,:);
-            if isequal(binned',currentClass) == 1
-                ccData(cc,14) = cl;
-                break
-            end
-        end
-        
         
     end
     clear cc volumes timestamps_hr isDrop curveIDs growthRates_fullOnly
@@ -249,15 +179,14 @@ for e = 1:length(exptArray)
     clear bins fractions binned currentClass cl
     
     
-    % 15. trim cell cycle data to avoid single point cell cycles
+    % 13. trim cell cycle data to avoid single point cell cycles
     addedVol = ccData(:,3);
     traits = ccData(addedVol > 0,:);
-    signal = ccSignal(addedVol > 0,:);
     clear ccData addedVol ccSignal
     
     
     
-    % 16. exclude outliers based on cell size (both birthsize and divsize)
+    % 14. exclude outliers based on cell size (both birthsize and divsize)
     %     a) id median and std of division size
     %     b) id median and std of birth size
     %     c) find indeces in both vectors that are within 3 std
@@ -288,7 +217,6 @@ for e = 1:length(exptArray)
     V_summed = V_division_binary + V_birth_binary;
     
     traits_final = traits(V_summed == 2,:);
-    signal_final = signal(V_summed == 2,:);
     
     clear birthSize_median birthSize_std divSize_median divSize_std
     clear div_bigOutlier div_smallOutlier birth_bigOutlier birth_smallOutlier
@@ -297,43 +225,12 @@ for e = 1:length(exptArray)
     
     
     
-    % 17. qq plots to determine whether data has normal distribution
-%     divSize = traits_final(:,2);
-%     interDiv = traits_final(:,6);
-%     mu = traits_final(:,7);
-%     
-%     figure(1)
-%     qqplot(divSize)
-%     title('QQ plot of division size')
-%     plotName = strcat('D-QQ-divSize-',date,'-c',num2str(condition));
-%     saveas(gcf,plotName,'epsc')
-%     close(gcf)
-%         
-%     figure(2)
-%     qqplot(interDiv)
-%     title('QQ plot of interdivision time')
-%     plotName = strcat('D-QQ-tau-',date,'-c',num2str(condition));
-%     saveas(gcf,plotName,'epsc')
-%     close(gcf)
-%     
-%     figure(3)
-%     qqplot(mu)
-%     title('QQ plot of growth rate')
-%     plotName = strcat('D-QQ-mu-',date,'-c',num2str(condition));
-%     saveas(gcf,plotName,'epsc')
-%     close(gcf)
-%     clear mu interDiv divSize
-    
-    
-    % 18. bootstrap hypothesis testing!
+    % 15. bootstrap hypothesis testing!
     % note: still need to justify exclusion of interdiv times < 10 visually
     interdivs = traits_final(:,6)*60;
     traits_10plus = traits_final(interdivs > 10,:);
-    signals_10plus = signal_final(interdivs > 10,:);
-    classifications = traits_10plus(:,14);
     clear signal_final traits_final signal traits interdivs
     
-
     
     % some conditions do not have data after trimming
     if isempty(traits_10plus) == 1
@@ -346,21 +243,20 @@ for e = 1:length(exptArray)
         lineages = traits_10plus(:,12);
         uniqueLines = unique(lineages);
         uniqueCounts = hist(lineages,uniqueLines);
-        
+
         longLines = uniqueLines(uniqueCounts == numCC);
         clear uniqueLines uniqueCounts
         
         
         % B.  use bootstrapping hypothesis testing to determine
         %     likelihood for each long lineage
-        for l = 1:length(longLines)
+        for ll = 1:length(longLines)
             
             
             % i. determine traits for each cycle within lineage
-            currentLine = longLines(l);
+            currentLine = longLines(ll);
             currentTraits = traits_10plus(lineages == currentLine,:);
-            currentClasses = currentTraits(:,14);
-            
+
             
             % ii. if lineage cell cycles are not consecutive, note this!
             currentCycles = currentTraits(:,13);
@@ -368,45 +264,45 @@ for e = 1:length(exptArray)
             if mean(isConsecutive) ~= 1
                 disp(strcat('Cell cycles in lineage (',num2str(currentLine),') are not consecutive!'))
             end
-            clear currentCycles isConsecutive
+            clear currentCycles isConsecutive currentLine
         
             
             % iii. generate random subsampling from entire population,
             %      repeat 10000 times
             subSampled_means = nan(repeats,5);
             subSampled_stds = nan(repeats,5);
-            for i = 1:repeats
+            for ii = 1:repeats
                 
                 % collect subsampled population
-                sPop = nan(numCC,14);
+                sPop = nan(numCC,13);
                 for sample = 1:numCC
                     
-                    sClass = currentClasses(sample);
-                    sClass_idx = traits_10plus(classifications==sClass,:);
-                    [sClass_list,~] = size(sClass_idx);
+                    % in steady, all cell cycles are fair game
+                    % sample with replacement
+                    cc_total = length(traits_10plus);
                     
-                    row = randi(sClass_list); % random number generator from a uniform distribution of range 1 to length of sClass list
-                    sPop(sample,:) =  sClass_idx(row,:);
+                    row = randi(cc_total); % random number generator from a uniform distribution of range 1 to length of sClass list
+                    sPop(sample,:) =  traits_10plus(row,:);
                     
                 end
-                clear row sClass_idx sClass sample
+                clear row cc_total sClass sample
                 
                 % average test statistics
                 sPop_mean = mean(sPop);
-                subSampled_means(i,1) = sPop_mean(6)*60; % interdivision time (min)
-                subSampled_means(i,2) = sPop_mean(1); % birth size
-                subSampled_means(i,3) = sPop_mean(2)/sPop_mean(1); % V_div/V_birth ratio
-                subSampled_means(i,4) = sPop_mean(7); % mean growth rate of cell cycle
-                subSampled_means(i,5) = sPop_mean(9); % nutrient score
-                subSampled_means(i,6) = sPop_mean(3); % added volume
+                subSampled_means(ii,1) = sPop_mean(6)*60; % interdivision time (min)
+                subSampled_means(ii,2) = sPop_mean(1); % birth size
+                subSampled_means(ii,3) = sPop_mean(2)/sPop_mean(1); % V_div/V_birth ratio
+                subSampled_means(ii,4) = sPop_mean(7); % mean growth rate of cell cycle
+                subSampled_means(ii,5) = sPop_mean(9); % nutrient score
+                subSampled_means(ii,6) = sPop_mean(3); % added vol
                 
                 sPop_std = std(sPop);
-                subSampled_stds(i,1) = sPop_std(6)*60;
-                subSampled_stds(i,2) = sPop_std(1); % birth size
-                subSampled_stds(i,3) = sPop_std(2)/sPop_std(1); % V_div/V_birth ratio
-                subSampled_stds(i,4) = sPop_std(7); % mean growth rate of cell cycle
-                subSampled_stds(i,5) = sPop_std(9); % nutrient score
-                subSampled_stds(i,6) = sPop_std(3); % added volume
+                subSampled_stds(ii,1) = sPop_std(6)*60;
+                subSampled_stds(ii,2) = sPop_std(1); % birth size
+                subSampled_stds(ii,3) = sPop_std(2)/sPop_std(1); % V_div/V_birth ratio
+                subSampled_stds(ii,4) = sPop_std(7); % mean growth rate of cell cycle
+                subSampled_stds(ii,5) = sPop_std(9); % nutrient score
+                subSampled_stds(ii,6) = sPop_std(3); % added vol
                 
             end
             clear i sPop sPop_mean
@@ -421,38 +317,37 @@ for e = 1:length(exptArray)
             end
             
             
-            
             % v. determine probability of getting something more
             %    extreme than observed lineage (p-value)
-            lineage_means(l,1) = mean(currentTraits(:,6)) * 60;
-            lineage_means(l,2) = mean(currentTraits(:,1));
-            lineage_means(l,3) = mean(currentTraits(:,2)./currentTraits(:,1));
-            lineage_means(l,4) = mean(currentTraits(:,7));
-            lineage_means(l,5) = mean(currentTraits(:,9));
-            lineage_means(l,6) = mean(currentTraits(:,3));
+            lineage_means(ll,1) = mean(currentTraits(:,6)) * 60;
+            lineage_means(ll,2) = mean(currentTraits(:,1));
+            lineage_means(ll,3) = mean(currentTraits(:,2)./currentTraits(:,1));
+            lineage_means(ll,4) = mean(currentTraits(:,7));
+            lineage_means(ll,5) = mean(currentTraits(:,9));
+            lineage_means(ll,6) = mean(currentTraits(:,3));
             
-            lineage_stds(l,1) = std(currentTraits(:,6)) * 60;
-            lineage_stds(l,2) = std(currentTraits(:,1));
-            lineage_stds(l,3) = std(currentTraits(:,2)./currentTraits(:,1));
-            lineage_stds(l,4) = std(currentTraits(:,7));
-            lineage_stds(l,5) = std(currentTraits(:,9));
-            lineage_stds(l,6) = std(currentTraits(:,3));
+            lineage_stds(ll,1) = std(currentTraits(:,6)) * 60;
+            lineage_stds(ll,2) = std(currentTraits(:,1));
+            lineage_stds(ll,3) = std(currentTraits(:,2)./currentTraits(:,1));
+            lineage_stds(ll,4) = std(currentTraits(:,7));
+            lineage_stds(ll,5) = std(currentTraits(:,9));
+            lineage_stds(ll,6) = std(currentTraits(:,3));
             
             % more extreme greater than distance between lineage mean
             % and bootstrapped mean
-            distance = abs(stdStat - lineage_stds(l,:));
+            distance = abs(stdStat - lineage_stds(ll,:));
             
             
             % calculate p-vals for each test statistic
             extreme_lows = stdStat - distance;
             extreme_highs = stdStat + distance;
             
-            for col = 1:6
+            for col = 1:5
                 count_lows(:,col) = subSampled_stds(:,col) < extreme_lows(col);
                 count_highs(:,col) = subSampled_stds(:,col) > extreme_highs(col);
             end
             
-            pVals(l,:) = (sum(count_lows)+sum(count_highs))./repeats;
+            pVals(ll,:) = (sum(count_lows)+sum(count_highs))./repeats;
             
         end
         clear extreme_lows extreme_highs count_lows count_highs distance l
@@ -463,7 +358,7 @@ for e = 1:length(exptArray)
     save(strcat('D-',date,'-std-c',num2str(condition),'-length',num2str(numCC)),'pVals','lineage_stds','lineage_means')
     
     clear signals_10plus traits_10plus classifications
-    clear pVals lineage_means lineage_stds interdivs
+    clear pVals lineage_means interdivs lineage_stds lineage_stds
     clear currentClasses currentLine currentTraits
 end
 clear specificColumn bubbletime repeats
@@ -475,9 +370,9 @@ names = {directory.name};
 trait_name = {'tau','Vbirth','ratio','mu','nScore'};
 
 
-for i = 1:length(names)
+for ii = 1:length(names)
     
-    load(names{i})
+    load(names{ii})
 
     figure()
     for trait = 1:5
@@ -488,11 +383,11 @@ for i = 1:length(names)
         xlim([0 1])
         
         if trait == 3
-            xlabel(names{i})
+            xlabel(names{ii})
         end
         
     end
-    plotName = strcat('D-pVals-directory-',num2str(i));
+    plotName = strcat('D-pVals-directory-',num2str(ii));
     saveas(gcf,plotName,'epsc')
     close(gcf)
     
