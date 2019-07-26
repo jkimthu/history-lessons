@@ -17,8 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 26
-%  Commit: workstation run with all experiments
-
+%  Commit: add violin plot to compare 15 and 60 min distributions of tau
 
 %  OK let's go!
 
@@ -268,7 +267,7 @@ for e = 1:length(exptArray)
     compiled_lambda{e} = mu_instantaneous;
     compiled_signal{e} = nSignal;
 end
-%%
+
 % 19. save hard earned data
 save('A6_data.mat','compiled_tau','compiled_lambda','compiled_signal','exptArray')
 
@@ -636,7 +635,7 @@ for ee = 11%:length(exptArray)
 end
 
 
-%% Part 4. plot distribution of interdivision time across conditions
+%% Part 4. plot distribution of interdivision time, comparing 15 and 60 min conditions
 
 
 clear
@@ -653,19 +652,40 @@ palette = {'DodgerBlue','Indigo','GoldenRod','FireBrick'};
 environment_order = {'low',30,300,900,3600,'ave','high'};
 
 
-% 1. 
+% 1. isolate conditions of interest, convert all from sec to min
+
+devs_rep1 = compiled_tau{11}{1}./60; % 60 min, 2019-01-29
+devs_rep2 = compiled_tau{12}{1}./60; % 60 min, 2019-01-31
+devs_rep3 = compiled_tau{13}{1}./60; % 60 min, 2019-02-01
+
+nots_rep1 = compiled_tau{8}{1}./60; % 15 min, 2017-11-13
+nots_rep2 = compiled_tau{9}{1}./60; % 15 min, 2017-01-12
+nots_rep3 = compiled_tau{10}{1}./60; % 15 min, 2017-01-16
 
 
-    % inter-division time
-    figure(4)
-    if ec == 1
-        distributionPlot(binned_divisionTimes,'widthDiv',[2 1],'histOri','left','color',rgb('Pink'),'showMM',2) % green
-    else
-        distributionPlot(gca,binned_divisionTimes,'widthDiv',[2 2],'histOri','right','color',rgb('Thistle'),'showMM',2) % purple
-    end
-    xlabel('growth condition')
-    ylabel('inter-division time (min)')
-    title('histograms of interdivision time across conditions')
-    legend('left: 2017-11-12 (30sec)','right: 2018-02-01 (60min)')
-    axis([0 5 0 100])
-    
+% 2. remove un-physiological data: interdivision times < 10 min
+devs_rep1 = devs_rep1(devs_rep1 > 9);
+devs_rep2 = devs_rep2(devs_rep2 > 9);
+devs_rep3 = devs_rep3(devs_rep3 > 9);
+
+nots_rep1 = nots_rep1(nots_rep1 > 9);
+nots_rep2 = nots_rep2(nots_rep2 > 9);
+nots_rep3 = nots_rep3(nots_rep3 > 9);
+
+
+% 3. compile into cell array of "left" and "right" bins
+deviants = {devs_rep1, devs_rep2, devs_rep3};
+goodies = {nots_rep1, nots_rep2, nots_rep3};
+
+
+% 4. plot replicate distributions of interdivision time as violin plot
+
+figure(1)
+distributionPlot(deviants,'widthDiv',[2 1],'histOri','left','color',rgb('DarkBlue'),'showMM',2)
+hold on
+distributionPlot(gca,goodies,'widthDiv',[2 2],'histOri','right','color',rgb('DeepSkyBlue'),'showMM',2)
+xlabel('replicate')
+ylabel('inter-division time (min)')
+title('histograms of interdivision time across conditions')
+legend('left: 60 min','right: 15 min')
+
