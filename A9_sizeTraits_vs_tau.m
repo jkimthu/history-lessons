@@ -16,7 +16,7 @@
 
 
 %  Last edit: jen, 2019 July 27
-%  Commit: first commit of cell size traits isolated by signal and tau
+%  Commit: edit to run on workstation, debugged to complete analysis for size traits
 
 
 %  OK let's go!
@@ -241,8 +241,8 @@ for e = 1:length(exptArray)
             
             % iii. remove cell cycle of WAY SMALL birth size, tracking IDs
             tau_final = tau_temp(tau_temp >= (tau_median-tau_std_temp*3));          % cut smallest vals, over 3 std out
-            dSize_final = dSize_temp(dSize_temp >= (tau_median-tau_std_temp*3)); 
-            aSize_final = aSize_temp(aSize_temp >= (tau_median-tau_std_temp*3)); 
+            dSize_final = dSize_temp(tau_temp >= (tau_median-tau_std_temp*3)); 
+            aSize_final = aSize_temp(tau_temp >= (tau_median-tau_std_temp*3)); 
             IDs_final = IDs_temp(tau_temp >= (tau_median-tau_std_temp*3));   
             clear tau_median tau_std_temp tau_temp IDs_temp dSize_temp aSize_temp
             
