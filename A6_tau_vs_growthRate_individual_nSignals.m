@@ -17,7 +17,7 @@
 
 
 %  Last edit: jen, 2019 July 26
-%  Commit: add mean and median calculations
+%  Commit: add mean, median and cv calculations
 
 %  OK let's go!
 
@@ -658,9 +658,10 @@ devs_rep1 = compiled_tau{11}{1}./60; % 60 min, 2019-01-29
 devs_rep2 = compiled_tau{12}{1}./60; % 60 min, 2019-01-31
 devs_rep3 = compiled_tau{13}{1}./60; % 60 min, 2019-02-01
 
-nots_rep1 = compiled_tau{8}{1}./60; % 15 min, 2017-11-13
-nots_rep2 = compiled_tau{9}{1}./60; % 15 min, 2017-01-12
-nots_rep3 = compiled_tau{10}{1}./60; % 15 min, 2017-01-16
+nots_rep1 = compiled_tau{8}{1}./60; % 15 min, 2017-01-12
+nots_rep2 = compiled_tau{9}{1}./60; % 15 min, 2018-01-16
+nots_rep3 = compiled_tau{10}{1}./60; % 15 min, 2018-01-17
+nots_rep4 = compiled_tau{7}{1}./60; % 15 min, 2017-11-13
 
 
 % 2. remove un-physiological data: interdivision times < 10 min
@@ -671,12 +672,13 @@ devs_rep3 = devs_rep3(devs_rep3 > 9);
 nots_rep1 = nots_rep1(nots_rep1 > 9);
 nots_rep2 = nots_rep2(nots_rep2 > 9);
 nots_rep3 = nots_rep3(nots_rep3 > 9);
+nots_rep4 = nots_rep4(nots_rep4 > 9);
 
 
 % 3. compile into cell array of "left" and "right" bins
 deviants = {devs_rep1, devs_rep2, devs_rep3};
 goodies = {nots_rep1, nots_rep2, nots_rep3};
-
+goodies_all = {nots_rep4, nots_rep1, nots_rep2, nots_rep3};
 
 % 4. plot replicate distributions of interdivision time as violin plot
 figure(1)
@@ -690,8 +692,19 @@ legend('left: 60 min','right: 15 min')
 
 
 % 5. report mean and median of each replicate
-deviants_mean = cellfun(@mean,deviants)
-deviants_median = cellfun(@median,deviants)
+deviants_mean = cellfun(@mean,deviants);
+deviants_median = cellfun(@median,deviants);
+deviants_std = cellfun(@std,deviants);
+deviants_cv = deviants_std./deviants_mean * 100
 
-goodies_mean = cellfun(@mean,goodies)
-goodies_median = cellfun(@median,goodies)
+goodies_mean = cellfun(@mean,goodies_all);
+goodies_median = cellfun(@median,goodies_all);
+goodies_std = cellfun(@std,goodies_all);
+goodies_cv = goodies_std./goodies_mean * 100
+
+
+
+
+
+
+
