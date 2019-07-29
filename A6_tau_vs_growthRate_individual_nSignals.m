@@ -323,7 +323,7 @@ max_lambda = 5;
 
 
 % 1. loop through experiments to format data and plot
-for ee = 11%:length(exptArray)
+for ee = 11:length(exptArray)
     
     
     % 2. initialize experiment meta data
@@ -333,7 +333,7 @@ for ee = 11%:length(exptArray)
     disp(strcat(date, ': analyze!'))
     
     
-    for condition = 1:4
+    for condition = 1%:4
         
         % 3. isolate experiment data
         eeTaus = compiled_tau{ee}{condition}./60; % convert from sec to h
@@ -603,33 +603,34 @@ for ee = 11%:length(exptArray)
         
         
         % 12. save plots
-        cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
-        
-        figure(1)
-        plotName = strcat('A6-scatter-fig1-',date,'-tau');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(2)
-        plotName = strcat('A6-heated-cellCounts-fig2-',date,'-tau');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
-        figure(3)
-        plotName = strcat('A6-heated-nScore-fig3-',date,'-tau');
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
+%         cd('/Users/jen/Documents/StockerLab/Data_analysis/currentPlots/')
+%         
+%         figure(1)
+%         plotName = strcat('A6-scatter-fig1-',date,'-tau');
+%         saveas(gcf,plotName,'epsc')
+%         close(gcf)
+%         
+%         figure(2)
+%         plotName = strcat('A6-heated-cellCounts-fig2-',date,'-tau');
+%         saveas(gcf,plotName,'epsc')
+%         close(gcf)
+%         
+%         figure(3)
+%         plotName = strcat('A6-heated-nScore-fig3-',date,'-tau');
+%         saveas(gcf,plotName,'epsc')
+%         close(gcf)
+%         
         
     end
+    types_counted
     
     if timescale == 3600
         
-        figure(5)
-        plotName = strcat('A6-bar-fig5-',date);
-        saveas(gcf,plotName,'epsc')
-        close(gcf)
-        
+%         figure(5)
+%         plotName = strcat('A6-bar-fig5-',date);
+%         saveas(gcf,plotName,'epsc')
+%         close(gcf)
+%         
     end
     
 end
