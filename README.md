@@ -134,4 +134,7 @@ L. Mean added volume vs mean birth volume, at population level
    Also plots mean added volume vs mean interdivision time
 
 
-M. 
+M. Plot path between steady-state low and steady-state high in birth size vs mean growth 	rate space, similar to A3, but using single upshift experiments
+		i. uses steady low, ave and high environments to draw expected relationship
+		ii. uses shift environment, binned by time after shift, to plot phenotypic path between two steady-states
+
