@@ -22,9 +22,8 @@
 
 
 
-%  Last edit: jen, 2019 July 18
-%  Commit: edit to plot distributions of birth volume, birth length and lambda
-
+%  Last edit: jen, 2019 Aug 2
+%  Commit: edit to calculate stats of how much greater 60 min birth size is than expected
 
 %  OK let's go!
 
@@ -794,7 +793,7 @@ clc
 % 0. initialize complete meta data
 cd('/Users/jen/Documents/StockerLab/Data_analysis/')
 load('storedMetaData.mat')
-load('A3_data_2.mat') % as of 2019-07-18, saved data compiles cc within 3 sigmas
+load('A3_data_1sigma.mat') % as of 2019-07-18, saved data compiles cc within 3 sigmas
 
 palette = {'Indigo','DarkTurquoise','SteelBlue','DeepSkyBlue','DodgerBlue','GoldenRod','FireBrick'};
 environment_order = {'low',30,300,900,3600,'ave','high'};
@@ -876,8 +875,8 @@ load('storedMetaData.mat')
 
 
 % 0. determine number of sigmas in dataset
-%sigs = '3sigmas';
-sigs = '1sigma';
+sigs = '3sigmas';
+%sigs = '1sigma';
 
 
 % 0. load dataset
@@ -955,3 +954,28 @@ end
 ylabel('Counts')
 xlabel('Mean growth rate')
 title(sigs)
+
+%% stats of mean birth volume vs mean growth rate
+
+
+clear
+clc
+
+% 0. initialize complete meta data
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+load('A3_data_1sigma.mat') % as of 2019-07-18, saved data compiles cc within 3 sigmas
+
+lambda_60_pop = population_mu(5);
+expected_size = exp(0.47251 * lambda_60_pop + 0.25041);
+
+for ex = 1:length(compiled_birthSize)
+    current = cellfun(@mean,compiled_birthSize{ex,1});
+    rep_birth_size(ex,:) = current';
+end
+
+birthSize_60_reps = rep_birth_size(11:13,1);
+d_expected = (birthSize_60_reps - expected_size)/expected_size *100;
+
+mean(d_expected)
+std(d_expected)
