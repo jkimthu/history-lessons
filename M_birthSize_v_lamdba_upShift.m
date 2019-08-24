@@ -17,8 +17,8 @@
 
 
 
-%  Last edit: jen, 2019 July 29
-%  Commit: first commit, defining path between two steady-states
+%  Last edit: jen, 2019 Aug 23
+%  Commit: re-do such that upshift and downshift have same axis
 
 
 
@@ -204,13 +204,13 @@ clear condition conditionData ans bubbletime date
 clear D5 T ii index shiftTime xys timescale
 
 % 14. save data
-save('M_data.mat','cycleData','condArray','shape','palette','binsPerHour')
+save('M_data_upshift.mat','cycleData','condArray','shape','palette','binsPerHour')
 
 
 %% Part 2. bin and plot data
 clear
 clc
-load('M_data.mat')
+load('M_data_upshift.mat')
 
 % time bins of interest in this analysis 
 minBin = 20; % 18-20 are preshift bins
@@ -339,7 +339,7 @@ y = fit(1)*x + fit(2);
 figure(1)
 hold on
 plot(x,y,'Color',rgb('SlateGray'))
-axis([1 3.5 0.6 1.9])
+axis([0.3 3.8 0.5 2])
 xlabel('mean mu')
 ylabel('ln(mean birth volume)')
 title('single upshifts compiled')

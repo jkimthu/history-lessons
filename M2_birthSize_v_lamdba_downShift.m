@@ -17,8 +17,8 @@
 
 
 
-%  Last edit: jen, 2019 July 29
-%  Commit: first commit, defining path between two steady-states
+%  Last edit: jen, 2019 Aug 23
+%  Commit: re-plot to have same axes between upshift and downshift
 
 
 
@@ -339,7 +339,7 @@ y = fit(1)*x + fit(2);
 figure(1)
 hold on
 plot(x,y,'Color',rgb('SlateGray'))
-%axis([1 3.5 0.6 1.9])
+axis([0.3 3.8 0.5 2])
 xlabel('mean mu')
 ylabel('ln(mean birth volume)')
 title('single downshifts compiled')
