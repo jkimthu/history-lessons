@@ -28,8 +28,8 @@
 
 
 
-% last update: jen, 2019 April 19
-% commit: first commit, revisited with histogram!
+% last update: jen, 2020 Jan 28
+% commit: plot raw width instead of added width
 
 
 % OK let's go!
@@ -654,4 +654,232 @@ figure(4)
 plotName = strcat('K-pdf_v_birthVol');
 saveas(gcf,plotName,'epsc')
 
+
+%% Part 4 - concatenate and plot: added v, added l, birth width vs birth volume
+
+
+% 0. initialize data
+clc
+clear
+cd('/Users/jen/Documents/StockerLab/Data_analysis/')
+load('storedMetaData.mat')
+load('addedSizeData.mat')
+
+
+
+% 1. for each environment (column), concatenate data across replicates
+for eCol = 1:length(environment_order)
+    
+    
+    % 2. isolate column and initialize data
+    hasData = cellfun(@isempty,V_birth(:,eCol));
+    
+    % volume
+    currCol_birthvols = V_birth(hasData==0,eCol);
+    currCol_addedvols = V_added(hasData==0,eCol);
+    concat_Vbirth = [];
+    concat_Vadded = [];
+    
+    % length
+    currCol_birthlengths = L_birth(hasData==0,eCol);
+    currCol_addedlengths = L_added(hasData==0,eCol);
+    concat_Lbirth = [];
+    concat_Ladded = [];
+    
+    % width
+    currCol_birthwidths = W_birth(hasData==0,eCol);
+    %currCol_addedwidths = W_added(hasData==0,eCol);
+    concat_Wbirth = [];
+    concat_Wadded = [];
+    clear hasData
+    
+    
+    % 3. concatenate data by looping through replicates
+    for replicate = 1:length(currCol_birthvols)
+        
+        % volume
+        rep_Vbirths = currCol_birthvols{replicate};
+        rep_Vadded = currCol_addedvols{replicate};
+        concat_Vbirth = [concat_Vbirth; rep_Vbirths];
+        concat_Vadded = [concat_Vadded; rep_Vadded];
+        
+        % length
+        rep_Lbirths = currCol_birthlengths{replicate};
+        rep_Ladded = currCol_addedlengths{replicate};
+        concat_Lbirth = [concat_Lbirth; rep_Lbirths];
+        concat_Ladded = [concat_Ladded; rep_Ladded];
+        
+        % width
+        rep_Wbirths = currCol_birthwidths{replicate};
+        %rep_Wadded = currCol_addedwidths{replicate};
+        concat_Wbirth = [concat_Wbirth; rep_Wbirths];
+        %concat_Wadded = [concat_Wadded; rep_Wadded];
+        
+        
+    end
+    
+    
+    
+    % 5. remove unphysical events, where added volume is negative
+    conceivables_Vbirth = concat_Vbirth(concat_Vadded > 0);
+    conceivables_Vadded = concat_Vadded(concat_Vadded > 0);
+    
+    conceivables_Lbirth = concat_Lbirth(concat_Vadded > 0);
+    conceivables_Ladded = concat_Ladded(concat_Vadded > 0);
+    
+    conceivables_Wbirth = concat_Wbirth(concat_Vadded > 0);
+    %conceivables_Wadded = concat_Wadded(concat_Vadded > 0);
+    clear concat_Vbirth concat_Vadded concat_Lbirth concat_Ladded concat_Wbirth concat_Wadded
+    
+    
+    
+    
+    % 6. normalize all values by mean of birth size
+    median_Vbirth = median(conceivables_Vbirth);
+
+    
+    
+    
+    % 7. bin birth sizes by every 0.1 cubic um 
+    
+    % volume
+    birthBins_vol = floor(conceivables_Vbirth*10);
+    bins = 1:max(birthBins_vol);
+    xbins_vol = bins'/ 10;
+    clear  bin 
+    
+    
+    
+    
+    % 8. accumulate size data by birth bin
+    
+    % added volume
+    binned_addedVols = accumarray(birthBins_vol,conceivables_Vadded,[],@(x) {x});
+    binned_v_means = cellfun(@mean,binned_addedVols);
+    binned_v_stds = cellfun(@std,binned_addedVols);
+    binned_v_counts = cellfun(@length,binned_addedVols);
+    binned_v_sems = binned_v_stds./sqrt(binned_v_counts);
+
+    
+    % added length
+    binned_addedLengths = accumarray(birthBins_vol,conceivables_Ladded,[],@(x) {x});
+    binned_l_means = cellfun(@mean,binned_addedLengths);
+    binned_l_stds = cellfun(@std,binned_addedLengths);
+    binned_l_counts = cellfun(@length,binned_addedLengths);
+    binned_l_sems = binned_l_stds./sqrt(binned_l_counts);
+    
+
+    % birth width
+    binned_bWidths = accumarray(birthBins_vol,conceivables_Wbirth,[],@(x) {x});
+    binned_w_means = cellfun(@mean,binned_bWidths);
+    binned_w_stds = cellfun(@std,binned_bWidths);
+    binned_w_counts = cellfun(@length,binned_bWidths);
+    binned_w_sems = binned_w_stds./sqrt(binned_w_counts);
+    
+    
+    
+    
+    % 9. plot subplots for all conditions
+    color = rgb(palette{eCol});
+    condition = environment_order{eCol};
+    
+    
+    % volume, raw
+    figure(1)
+    subplot(1,length(environment_order),eCol)
+    plot(xbins_vol,binned_v_means,'o','Color',color)
+    hold on
+    errorbar(xbins_vol,binned_v_means,binned_v_sems,'.','Color',color)
+    hold on
+    plot(median_Vbirth,0,'o','Color',color)
+    axis([0 10 0 10])
+    title(condition)
+    if eCol == 1
+        ylabel('added volume,mean + sem')
+    end
+    if eCol == 4
+        xlabel('birth volume, mean + sem')
+    end
+    
+   
+    
+    % length, raw
+    figure(2)
+    subplot(1,length(environment_order),eCol)
+    plot(xbins_vol,binned_l_means,'o','Color',color)
+    hold on
+    errorbar(xbins_vol,binned_l_means,binned_l_sems,'.','Color',color)
+    hold on
+    plot(median_Vbirth,0,'o','Color',color)
+    axis([0 10 0 6])
+    title(condition)
+    if eCol == 1
+        ylabel('added length, mean + sem')
+    end
+    if eCol == 4
+        xlabel('birth volume, mean + sem')
+    end
+    
+    
+    
+    % width, raw
+    figure(3)
+    subplot(1,length(environment_order),eCol)
+    plot(xbins_vol,binned_w_means,'o','Color',color)
+    hold on
+    errorbar(xbins_vol,binned_w_means,binned_w_sems,'.','Color',color)
+    hold on
+    plot(median_Vbirth,-0.5,'o','Color',color)
+    axis([0 10 0.8 1.8])
+    title(condition)
+    if eCol == 1
+        ylabel('birth width, mean + sem')
+    end
+    if eCol == 4
+        xlabel('birth volume, mean + sem')
+    end
+    
+    
+    % pdf
+%     count_sum = sum(binned_w_counts);
+%     densityFunc = binned_w_counts./count_sum;
+%     
+%     figure(4)
+%     subplot(1,length(environment_order),eCol)
+%     bar(xbins_vol,densityFunc,'FaceColor',color)
+%     hold on
+%     plot(median_Vbirth,0,'o','Color',rgb('SlateGray'))
+%     hold on
+%     txt = strcat('n=',num2str(count_sum));
+%     text(2,0.13,txt)
+%     axis([0 10 0 0.12])
+%     title(condition)
+%     if eCol == 1
+%         ylabel('pdf')
+%     end
+%     if eCol == 4
+%         xlabel('birth volume, mean + sem')
+%     end
+%     
+    
+end
+
+% 10. save plots
+cd('/Users/jen/Documents/StockerLab/Data_analysis/figures_ms2/K_addedSize_v_birthSize')
+
+figure(1)
+plotName = strcat('K-addedVol_v_birthVol');
+%saveas(gcf,plotName,'epsc')
+
+figure(2)
+plotName = strcat('K-addedLength_v_birthVol');
+%saveas(gcf,plotName,'epsc')
+
+figure(3)
+plotName = strcat('K-addedWidth_v_birthVol');
+%saveas(gcf,plotName,'epsc')
+
+figure(4)
+plotName = strcat('K-pdf_v_birthVol');
+%saveas(gcf,plotName,'epsc')
 
